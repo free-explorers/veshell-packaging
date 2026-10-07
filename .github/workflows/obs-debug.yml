@@ -65,11 +65,13 @@ jobs:
           OSC_CONFIG="$RUNNER_TEMP/osc/oscrc" \
             scripts/obs-publish.sh /tmp/obs "$OBS_PROJECT" "$OBS_PACKAGE" --format all
 
-          terminal='(succeeded|failed|unresolvable|broken|disabled|excluded)'
-          for _ in $(seq 1 60); do
+          for _ in $(seq 1 80); do
             out="$(osc results "$OBS_PROJECT" "$OBS_PACKAGE" 2>/dev/null || true)"
-            pending="$(printf '%s\n' "$out" | awk -v t="$terminal" 'NF && $NF !~ t' | wc -l)"
-            if [ -n "$out" ] && [ "$pending" -eq 0 ]; then break; fi
+            deb="$(printf '%s\n' "$out" | grep -E '^(xUbuntu_26\.04|Debian_13)\b' || true)"
+            if [ -n "$deb" ] && ! printf '%s\n' "$deb" | grep -qE '\*|building|scheduled|blocked|dispatching|signature|new|waiting'; then
+              break
+            fi
+            echo "waiting for the DEB rebuild..."
             sleep 15
           done
 
