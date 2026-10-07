@@ -26,7 +26,7 @@ jobs:
     steps:
       - name: Install osc
         shell: bash
-        run: zypper --non-interactive install osc
+        run: zypper --non-interactive install osc git
 
       - name: Report OBS results
         shell: bash
