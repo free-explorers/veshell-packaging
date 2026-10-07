@@ -23,7 +23,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "release.json"
-SOURCE_REPO = "https://github.com/free-explorers/veshell"
+# The prebuilt payload is published by this repository's own release.
+PREBUILT_REPO = "https://github.com/free-explorers/veshell-packaging"
 
 # format -> [(template, output filename)]
 FORMATS = {
@@ -61,7 +62,7 @@ def main() -> int:
     tag = args.tag or f"v{release_id}"
     asset = f"veshell-{release_id}-x86_64.tar.zst"
 
-    tokens["PREBUILT_URL"] = f"{SOURCE_REPO}/releases/download/{tag}/{asset}"
+    tokens["PREBUILT_URL"] = f"{PREBUILT_REPO}/releases/download/{tag}/{asset}"
     tokens["PREBUILT_SHA256"] = args.prebuilt_sha
     tokens["TAG"] = tag
 
