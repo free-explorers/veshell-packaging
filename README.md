@@ -239,8 +239,8 @@ Ubuntu 26.04 and Debian 13 - the repository path selects the target
 
 ```sh
 sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL https://build.opensuse.org/projects/<project>/public_key \
-  | sudo gpg --dearmor -o /etc/apt/keyrings/veshell.gpg
+curl -fsSL https://download.opensuse.org/repositories/<project>/xUbuntu_26.04/Release.key \
+  | sudo gpg --batch --no-tty --yes --dearmor -o /etc/apt/keyrings/veshell.gpg
 echo "deb [signed-by=/etc/apt/keyrings/veshell.gpg] https://download.opensuse.org/repositories/<project>/xUbuntu_26.04/ ./" \
   | sudo tee /etc/apt/sources.list.d/veshell.list
 sudo apt update && sudo apt install veshell-bin

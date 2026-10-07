@@ -27,6 +27,13 @@ ExclusiveArch:  x86_64
 Provides:       veshell = %{version}-%{release}
 Conflicts:      veshell
 
+# dlopen()ed at runtime (Smithay's EGL/Wayland bindings and xkbcommon-dl), so
+# they are absent from the ELF NEEDED entries and from the automatic
+# shared-library requirements. Without them the compositor panics at startup.
+Requires:       libEGL.so.1()(64bit)
+Requires:       libwayland-server.so.0()(64bit)
+Requires:       libxkbcommon-x11.so.0()(64bit)
+
 %if 0%{?suse_version}
 # openSUSE: shared-library requirements are generated automatically from the
 # packaged ELF objects, so only the non-library runtime pieces are listed here.
