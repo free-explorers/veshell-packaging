@@ -61,6 +61,22 @@ DESTDIR="$staging" bash "$helper" install
 }
 install -Dm644 "$VESHELL_SRC/LICENSE" "$staging/usr/share/licenses/veshell/LICENSE"
 
+# Bundle libdisplay-info so the payload does not depend on a distro soname:
+# Debian 13 ships libdisplay-info.so.2 while Ubuntu 26.04 ships .so.3. The
+# compositor already carries RUNPATH=/usr/lib/veshell, so a copy next to the
+# other bundled libraries makes the payload self-contained. The library needs
+# only libc/libm.
+libdisplay_info="$(ldconfig -p 2>/dev/null | awk '/libdisplay-info\.so\.3[[:space:]]/{print $NF; exit}')"
+if [[ -z "$libdisplay_info" || ! -e "$libdisplay_info" ]]; then
+  libdisplay_info="$(find /usr/lib /usr/lib64 -maxdepth 1 -name 'libdisplay-info.so.3*' -print -quit 2>/dev/null || true)"
+fi
+[[ -n "$libdisplay_info" && -e "$libdisplay_info" ]] || {
+  printf 'error: libdisplay-info.so.3 not found in the build environment\n' >&2
+  exit 1
+}
+install -Dm755 "$(readlink -f "$libdisplay_info")" \
+  "$staging/usr/lib/veshell/libdisplay-info.so.3"
+
 mkdir -p "$out"
 tarball="$out/veshell-$release_id-x86_64.tar.zst"
 rm -f "$tarball"

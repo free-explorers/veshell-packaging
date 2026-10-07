@@ -201,6 +201,11 @@ carries the Debian runtime dependency names and `Provides`/`Conflicts: veshell`.
 OBS source files do not carry a file mode, so `build.script` restores the
 executable bit on `debian/rules` before `dpkg-buildpackage` runs.
 
+Because Debian 13 and Ubuntu 26.04 ship different `libdisplay-info` sonames
+(`.so.2` vs `.so.3`), the prebuilt payload bundles `libdisplay-info.so.3` in
+`usr/lib/veshell` (`scripts/build-prebuilt.sh`). The compositor already carries
+`RUNPATH=/usr/lib/veshell`, so the package no longer depends on a distro copy.
+
 ### Installing from the OBS repositories
 
 Replace `<project>` with `OBS_PROJECT`, using `:` -> `:/` in the download URL

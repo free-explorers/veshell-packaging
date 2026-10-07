@@ -9,7 +9,6 @@ Standards-Version: 4.6.2
 Build-Depends:
  debhelper-compat (= 13),
  zstd,
- libdisplay-info-dev,
  libgbm-dev,
  libglib2.0-dev,
  libglvnd-dev,
