@@ -189,6 +189,19 @@ jobs:
             > /tmp/aur-bin/.SRCINFO
           head -n 15 /tmp/aur-bin/.SRCINFO
 
+      - name: Prepare the veshell-git AUR package
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$(pwd)"
+          chown -R build:build "$work/arch-git"
+          # Fetch the VCS source so pkgver() reflects the current branch tip, then
+          # regenerate .SRCINFO. The recipe itself does not change per release.
+          sudo -u build bash -c "cd '$work/arch-git' && makepkg --nobuild --nodeps -f"
+          sudo -u build bash -c "cd '$work/arch-git' && makepkg --printsrcinfo" \
+            > "$work/arch-git/.SRCINFO"
+          head -n 15 "$work/arch-git/.SRCINFO"
+
       - name: Publish to the AUR
         shell: bash
         env:
@@ -205,6 +218,7 @@ jobs:
           chmod 600 "$key"
           AUR_SSH_KEY="$key" scripts/aur-publish.sh veshell arch
           AUR_SSH_KEY="$key" scripts/aur-publish.sh veshell-bin /tmp/aur-bin
+          AUR_SSH_KEY="$key" scripts/aur-publish.sh veshell-git arch-git
 
   copr:
     name: Publish to COPR (Fedora)

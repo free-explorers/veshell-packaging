@@ -54,6 +54,9 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 │   ├── PKGBUILD                 # Arch / Manjaro source package (generated)
 │   ├── build-veshell.sh         # copy of scripts/build-veshell.sh
 │   └── .SRCINFO
+├── arch-git/
+│   ├── PKGBUILD                 # AUR veshell-git (VCS; not generated per release)
+│   └── .SRCINFO
 ├── fedora/
 │   ├── veshell.spec             # Fedora source RPM (generated)
 │   └── build-veshell.sh
@@ -128,7 +131,9 @@ hand is a mistake: change `release.json` or the templates and re-render.
    `archlinux:base-devel` container, attests `SHA256SUMS`, and uploads both to
    the release.
 3. **aur** — regenerates `.SRCINFO`, renders `veshell-bin` from the prebuilt
-   hash, and pushes `veshell` and `veshell-bin` to the AUR.
+   hash, and pushes `veshell`, `veshell-bin` and `veshell-git` to the AUR. The
+   `veshell-git` recipe tracks the VCS and rebuilds the shell through Veshell's
+   own development bootstrap.
 4. **copr** — builds the `veshell-bin` SRPM from the prebuilt payload and
    submits it to COPR.
 5. **obs** — commits the `veshell-bin` spec, changes and prebuilt payload to the
@@ -162,7 +167,7 @@ The channels are split by distribution so they never overlap:
 
 | Channel | Distributions |
 | --- | --- |
-| AUR (`veshell`, `veshell-bin`) | Arch / Manjaro |
+| AUR (`veshell`, `veshell-bin`, `veshell-git`) | Arch / Manjaro |
 | COPR | **Fedora** |
 | OBS | openSUSE (DEB targets later) |
 | Nix | NixOS |
