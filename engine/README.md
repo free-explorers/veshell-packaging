@@ -28,6 +28,11 @@ switching is only a matter of changing the owner/repo in the download URL.
 
 ## Switching Veshell to our engine
 
+> Done for the current pin: `release.json` consumes
+> `linux-engine-sdk-release-x86_64-a804b261645ef8c13eb3d5c44a5c2fb0340c5539`
+> from `free-explorers/flutter-engine`. The steps below are for the next engine
+> revision.
+
 1. In `free-explorers/flutter-engine`, dispatch **Engine Release** with the
    pinned engine revision (mode `release`; run `debug` too for keyless dev
    builds). It publishes `linux-engine-sdk-<mode>-x86_64-<rev>`.
