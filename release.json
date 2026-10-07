@@ -5,7 +5,7 @@
   "prerelease": null,
   "channel": "beta",
   "date": "2026-10-07T00:00:00Z",
-  "commit": "0c2f8a9370cc756a41e06b232475f481126538a7",
+  "commit": "69124dcd398d31df8d675e154cf1d0af97d5519f",
   "maintainer": "Adrien Peslerbe <adrien@pesler.be>",
   "polkit_helper": "/usr/lib/polkit-1/polkit-agent-helper-1",
   "mirrors": {

@@ -48,7 +48,20 @@ fi
 install -m644 "$source_dir/PKGBUILD" "$work/$package/PKGBUILD"
 install -m644 "$source_dir/.SRCINFO" "$work/$package/.SRCINFO"
 
-git -C "$work/$package" add PKGBUILD .SRCINFO
+# The AUR requires every local (non-URL) source entry to be present; publish
+# them alongside PKGBUILD and .SRCINFO. .SRCINFO is makepkg's canonical parse.
+mapfile -t local_sources < <(
+  sed -n 's/^[[:space:]]*source = //p' "$source_dir/.SRCINFO" |
+    grep -vE '::' | grep -vE '://' | grep -vE '^$'
+)
+if (( ${#local_sources[@]} > 0 )); then
+  for src in "${local_sources[@]}"; do
+    [[ -f "$source_dir/$src" ]] || { printf 'error: PKGBUILD source %s is missing from %s\n' "$src" "$source_dir" >&2; exit 1; }
+    install -m644 "$source_dir/$src" "$work/$package/$src"
+  done
+fi
+
+git -C "$work/$package" add -A
 if git -C "$work/$package" diff --cached --quiet; then
   printf '%s: no changes to publish\n' "$package"
   exit 0
