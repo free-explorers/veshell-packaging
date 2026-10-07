@@ -1,0 +1,80 @@
+name: OBS debug
+
+# Temporary: render + publish the OBS recipes from the current branch tip using
+# the payload already on the release, then wait for and report the build results.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag holding the prebuilt payload
+        required: true
+        type: string
+        default: v0.1.0
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_TAG: ${{ inputs.tag }}
+
+jobs:
+  debug:
+    runs-on: ubuntu-24.04
+    container: opensuse/tumbleweed:latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+      OSC_CONFIG_CONTENT: ${{ secrets.OSC_CONFIG }}
+      OBS_PROJECT: ${{ vars.OBS_PROJECT }}
+      OBS_PACKAGE: ${{ vars.OBS_PACKAGE || 'veshell' }}
+    steps:
+      - name: Install tooling
+        shell: bash
+        run: zypper --non-interactive install osc git python3 curl
+
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Publish and report
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -d -m700 "$RUNNER_TEMP/osc"
+          printf '%s\n' "$OSC_CONFIG_CONTENT" > "$RUNNER_TEMP/osc/oscrc"
+          chmod 600 "$RUNNER_TEMP/osc/oscrc"
+          osc() { command osc --config "$RUNNER_TEMP/osc/oscrc" "$@"; }
+
+          release_id="$(python3 -c 'import json;m=json.load(open("release.json"));print(m["version"]+("-"+m["prerelease"] if m.get("prerelease") else ""))')"
+          asset="veshell-${release_id}-x86_64.tar.zst"
+
+          rm -rf /tmp/inputs /tmp/obs
+          mkdir -p /tmp/inputs
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern "$asset" --pattern SHA256SUMS --dir /tmp/inputs --clobber
+          prebuilt_sha="$(cut -d' ' -f1 /tmp/inputs/SHA256SUMS)"
+
+          for format in rpm deb; do
+            python3 scripts/gen-bin-recipes.py --format "$format" \
+              --prebuilt-sha "$prebuilt_sha" --tag "$RELEASE_TAG" --out /tmp/obs
+          done
+          cp "/tmp/inputs/$asset" /tmp/obs/
+
+          OSC_CONFIG="$RUNNER_TEMP/osc/oscrc" \
+            scripts/obs-publish.sh /tmp/obs "$OBS_PROJECT" "$OBS_PACKAGE" --format all
+
+          terminal='(succeeded|failed|unresolvable|broken|disabled|excluded)'
+          for _ in $(seq 1 60); do
+            out="$(osc results "$OBS_PROJECT" "$OBS_PACKAGE" 2>/dev/null || true)"
+            pending="$(printf '%s\n' "$out" | awk -v t="$terminal" 'NF && $NF !~ t' | wc -l)"
+            if [ -n "$out" ] && [ "$pending" -eq 0 ]; then break; fi
+            sleep 15
+          done
+
+          echo "===== osc results ====="
+          osc results "$OBS_PROJECT" "$OBS_PACKAGE" || true
+          for repo in xUbuntu_26.04 Debian_13; do
+            echo "===== $repo buildlog tail ====="
+            osc buildlog "$OBS_PROJECT" "$OBS_PACKAGE" "$repo" x86_64 2>&1 | tail -n 150 || true
+          done

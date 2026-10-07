@@ -10,7 +10,21 @@ Source: veshell-bin
 Section: x11
 Priority: optional
 Maintainer: @MAINTAINER@
-Build-Depends: debhelper-compat (= 13)
+Build-Depends:
+ debhelper-compat (= 13),
+ zstd,
+ libdisplay-info-dev,
+ libgbm-dev,
+ libglib2.0-dev,
+ libglvnd-dev,
+ libgstreamer-plugins-base1.0-dev,
+ libgstreamer1.0-dev,
+ libinput-dev,
+ libpipewire-0.3-dev,
+ libpixman-1-dev,
+ libseat-dev,
+ libudev-dev,
+ libxkbcommon-dev
 Standards-Version: 4.6.2
 Homepage: https://github.com/free-explorers/veshell
 
