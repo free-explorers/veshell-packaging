@@ -47,10 +47,7 @@ jobs:
           echo "===== osc results ====="
           osc results "$PROJECT" "$PACKAGE" || true
 
-          for repo in $(osc results "$PROJECT" "$PACKAGE" 2>/dev/null | tail -n +3 | awk '{print $1}' | sort -u); do
-            arch="$(osc results "$PROJECT" "$PACKAGE" 2>/dev/null | awk -v r="$repo" '$1==r && $3!="succeeded" && $3!="disabled" && $3!="excluded" {print $2; exit}')"
-            if [ -n "${arch:-}" ]; then
-              echo "===== buildlog tail: $repo/$arch ====="
-              osc buildlog "$PROJECT" "$repo" "$arch" "$PACKAGE" 2>&1 | tail -n 80 || true
-            fi
+          for repo in openSUSE_Tumbleweed xUbuntu_26.04 Debian_13; do
+            echo "===== buildlog tail: $repo/x86_64 ====="
+            osc buildlog "$PROJECT" "$PACKAGE" "$repo" x86_64 2>&1 | tail -n 160 || true
           done
