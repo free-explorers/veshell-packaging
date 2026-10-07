@@ -22,11 +22,11 @@
     },
     "artifacts": {
       "patched_sdk": {
-        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/common/flutter_patched_sdk.zip",
+        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/flutter_patched_sdk.zip",
         "sha256": "5f7d44ecaa2f3d219b9fdf2a1c3977e83545f6f8797fad604f564c1b4154ec8d"
       },
       "patched_sdk_product": {
-        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/common/flutter_patched_sdk_product.zip",
+        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/flutter_patched_sdk_product.zip",
         "sha256": "902bc3b27a1bd3f13b756af2660891dd996eb33ab9bc3e4b89c0c9cfdf49e2aa"
       },
       "linux_x64_artifacts": {

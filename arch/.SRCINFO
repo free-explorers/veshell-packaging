@@ -72,8 +72,8 @@ pkgbase = veshell
 	source = veshell::git+https://github.com/free-explorers/veshell.git#commit=f7180fe48c8ba75c08d3ae7c38e6b7bc27ea85fe
 	source = build-veshell.sh
 	source = flutter_linux_3.47.2-stable.tar.xz::https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.2-stable.tar.xz
-	source = flutter_patched_sdk.zip::https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/common/flutter_patched_sdk.zip
-	source = flutter_patched_sdk_product.zip::https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/common/flutter_patched_sdk_product.zip
+	source = flutter_patched_sdk.zip::https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/flutter_patched_sdk.zip
+	source = flutter_patched_sdk_product.zip::https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/flutter_patched_sdk_product.zip
 	source = linux-x64_artifacts.zip::https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/linux-x64/artifacts.zip
 	source = linux-x64-debug_flutter-gtk.zip::https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/linux-x64-debug/linux-x64-flutter-gtk.zip
 	source = linux-x64-profile_flutter-gtk.zip::https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/linux-x64-profile/linux-x64-flutter-gtk.zip
