@@ -145,7 +145,7 @@ succeeds before the channels are set up:
 | --- | --- | --- |
 | aur | `AUR_SSH_PRIVATE_KEY` | — |
 | copr | `COPR_CONFIG` | `COPR_PROJECT` (`free-explorers/veshell`) |
-| obs | `OSC_CONFIG` | `OBS_PROJECT` (`home:free-explorers`), `OBS_PACKAGE` (`veshell`) |
+| obs | `OSC_CONFIG` | `OBS_PROJECT` (required, e.g. `home:<user>`), `OBS_PACKAGE` (`veshell`) |
 
 Both AUR packages, the COPR project, and the OBS project/package must exist
 first; create them once in the respective web UI.
