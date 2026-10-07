@@ -56,7 +56,9 @@ PY
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
-pkg="$work/pkg/$package"
+# `osc checkout --output-dir DIR` stores the package directly in DIR (no
+# PROJECT/PACKAGE structure), so the working copy is $work/pkg itself.
+pkg="$work/pkg"
 
 if ((dry_run)); then
   printf 'dry run: would ensure the openSUSE_Tumbleweed repository on %s\n' "$project"
@@ -64,7 +66,7 @@ else
   ensure_repository
 fi
 
-if ! osc checkout --output-dir "$work/pkg" "$project" "$package"; then
+if ! osc checkout --output-dir "$pkg" "$project" "$package"; then
   printf 'error: OBS package %s/%s is not reachable; create it first\n' "$project" "$package" >&2
   exit 1
 fi
