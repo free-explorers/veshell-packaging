@@ -17,8 +17,8 @@
 # that blocker is documented in README.md. This spec is intended for
 # a COPR / self-hosted repository.
 
-%global commit 6670948ebef71bef9b4b5cc4373801dd875b3e92
-%global shortcommit 6670948
+%global commit e954bb7ebcdfab7892249005c64ff7ba740930d3
+%global shortcommit e954bb7
 %global flutter_version 3.47.2
 %global engine_revision a804b261645ef8c13eb3d5c44a5c2fb0340c5539
 %global artifact_base https://storage.googleapis.com/flutter_infra_release/flutter/%{engine_revision}
