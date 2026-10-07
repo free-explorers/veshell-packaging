@@ -20,7 +20,7 @@ name: Release
 #
 # Optional repository variables (defaults shown):
 #   VESHELL_REPO          free-explorers/veshell
-#   COPR_PROJECT          free-explorers/veshell
+#   COPR_PROJECT          (unset: the COPR job is skipped until it is set)
 #   OBS_PROJECT           (unset: the OBS job is skipped until it is set)
 #   OBS_PACKAGE           veshell
 
@@ -227,11 +227,11 @@ jobs:
         shell: bash
         env:
           COPR_CONFIG_CONTENT: ${{ secrets.COPR_CONFIG }}
-          COPR_PROJECT: ${{ vars.COPR_PROJECT || 'free-explorers/veshell' }}
+          COPR_PROJECT: ${{ vars.COPR_PROJECT }}
         run: |
           set -euo pipefail
-          if [[ -z "${COPR_CONFIG_CONTENT:-}" ]]; then
-            echo "COPR_CONFIG is not configured; skipping the COPR publish." >&2
+          if [[ -z "${COPR_CONFIG_CONTENT:-}" || -z "${COPR_PROJECT:-}" ]]; then
+            echo "COPR_CONFIG and COPR_PROJECT must be configured; skipping the COPR publish." >&2
             exit 0
           fi
           printf '%s\n' "$COPR_CONFIG_CONTENT" > "$RUNNER_TEMP/copr"
