@@ -18,7 +18,7 @@ name: Release
 # Optional repository variables (defaults shown):
 #   VESHELL_REPO          free-explorers/veshell
 #   COPR_PROJECT          free-explorers/veshell
-#   OBS_PROJECT           home:free-explorers
+#   OBS_PROJECT           (unset: the OBS job is skipped until it is set)
 #   OBS_PACKAGE           veshell
 
 on:
@@ -261,12 +261,12 @@ jobs:
         shell: bash
         env:
           OSC_CONFIG_CONTENT: ${{ secrets.OSC_CONFIG }}
-          OBS_PROJECT: ${{ vars.OBS_PROJECT || 'home:free-explorers' }}
+          OBS_PROJECT: ${{ vars.OBS_PROJECT }}
           OBS_PACKAGE: ${{ vars.OBS_PACKAGE || 'veshell' }}
         run: |
           set -euo pipefail
-          if [[ -z "${OSC_CONFIG_CONTENT:-}" ]]; then
-            echo "OSC_CONFIG is not configured; skipping the OBS publish." >&2
+          if [[ -z "${OSC_CONFIG_CONTENT:-}" || -z "${OBS_PROJECT:-}" ]]; then
+            echo "OSC_CONFIG and OBS_PROJECT must be configured; skipping the OBS publish." >&2
             exit 0
           fi
           install -d -m700 "$RUNNER_TEMP/osc"
