@@ -150,11 +150,26 @@ succeeds before the channels are set up:
 Both AUR packages, the COPR project, and the OBS project/package must exist
 first; create them once in the respective web UI.
 
-The OBS and COPR channels ship the `veshell-bin` binary RPM built from the
-prebuilt payload (the same model as the AUR `veshell-bin`), because Flutter's
-~1.9 GB of pinned inputs exceed the services' upload limits. A source RPM on
-those services needs a server-side `_service` or builder-side fetching, and is
-worth doing once we publish our own engine.
+The channels are split by distribution so they never overlap:
+
+| Channel | Distributions |
+| --- | --- |
+| AUR (`veshell`, `veshell-bin`) | Arch / Manjaro |
+| COPR | **Fedora** |
+| OBS | openSUSE (DEB targets later) |
+| Nix | NixOS |
+
+All of them ship the `veshell-bin` binary package built from the prebuilt
+payload (the same model as the AUR `veshell-bin`), because Flutter's ~1.9 GB of
+pinned inputs exceed the services' upload limits. A source package on those
+services needs a server-side `_service` or builder-side fetching, and is worth
+doing once we publish our own engine.
+
+Fedora RPMs are built on COPR, not OBS: `%if`-free, Fedora-only packaging is
+simpler there, and `dnf copr enable` is the idiomatic Fedora install path. OBS
+must not be given Fedora targets. Its spec therefore needs openSUSE dependency
+names (or `%if 0%{?suse_version}` branches) before the DEB/openSUSE targets are
+useful; COPR uses the current Fedora spec unchanged.
 
 ### Compliance note
 

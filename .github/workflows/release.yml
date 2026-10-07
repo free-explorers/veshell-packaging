@@ -15,6 +15,9 @@ name: Release
 #   COPR_CONFIG           copr-cli config content (login/username/token)
 #   OSC_CONFIG            oscrc content (OBS apiurl + credentials)
 #
+# Channels are split by distribution: AUR = Arch, COPR = Fedora,
+# OBS = openSUSE/DEB, Nix = NixOS. Do not give OBS Fedora targets.
+#
 # Optional repository variables (defaults shown):
 #   VESHELL_REPO          free-explorers/veshell
 #   COPR_PROJECT          free-explorers/veshell
@@ -203,7 +206,7 @@ jobs:
           AUR_SSH_KEY="$key" scripts/aur-publish.sh veshell-bin /tmp/aur-bin
 
   copr:
-    name: Publish to COPR
+    name: Publish to COPR (Fedora)
     needs: [validate, prebuilt]
     runs-on: ubuntu-24.04
     container: fedora:latest
@@ -242,7 +245,7 @@ jobs:
             scripts/copr-publish.sh /tmp/rpm-bin "$COPR_PROJECT"
 
   obs:
-    name: Publish to OBS
+    name: Publish to OBS (openSUSE/DEB)
     needs: [validate, prebuilt]
     runs-on: ubuntu-24.04
     container: opensuse/tumbleweed:latest
