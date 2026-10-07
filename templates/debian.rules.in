@@ -1,0 +1,37 @@
+#!/usr/bin/make -f
+# Generated at release time by scripts/gen-bin-recipes.py from
+# templates/debian.rules.in. Do not edit by hand.
+#
+# The prebuilt payload (see veshell-bin.dsc's DEBTRANSFORM-TAR) is the upstream
+# source archive, so "building" only installs it into the binary package.
+#
+# That payload is rooted at usr/ (it is also the package root for the RPM and
+# Arch recipes). dpkg-source strips the single top-level directory of an
+# upstream archive while unpacking, so the build directory usually holds the
+# contents of usr/ rather than usr/ itself; re-attach usr/ in that case.
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	@true
+
+override_dh_auto_build:
+	@true
+
+override_dh_auto_test:
+	@true
+
+override_dh_auto_install:
+	mkdir -p debian/veshell-bin
+	set -eu; \
+	if [ -d usr ]; then \
+		dest=debian/veshell-bin; \
+	else \
+		dest=debian/veshell-bin/usr; \
+		mkdir -p "$$dest"; \
+	fi; \
+	for entry in *; do \
+		if [ "$$entry" = debian ]; then continue; fi; \
+		cp -a "$$entry" "$$dest/"; \
+	done

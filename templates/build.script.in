@@ -1,0 +1,7 @@
+#!/bin/sh
+# OBS sources this file instead of the default "dsc" build command
+# (build-recipe-dsc, dsc:build_cmd). OBS source files do not carry a file mode,
+# so the executable bit OBS requires on debian/rules is restored here before
+# the standard Debian build runs.
+chmod +x debian/rules
+exec dpkg-buildpackage -us -uc

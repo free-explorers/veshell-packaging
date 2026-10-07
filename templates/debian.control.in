@@ -1,0 +1,54 @@
+# Veshell binary DEB control file for OBS.
+#
+# Generated at release time by scripts/gen-bin-recipes.py from
+# templates/debian.control.in. Do not edit by hand.
+#
+# Installs the prebuilt payload published on the GitHub release; it does not
+# build from source. Prefer the source package (debian/) when you want a fully
+# verifiable source build.
+Source: veshell-bin
+Section: x11
+Priority: optional
+Maintainer: @MAINTAINER@
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Homepage: https://github.com/free-explorers/veshell
+
+Package: veshell-bin
+Architecture: amd64
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ fontconfig,
+ fonts-roboto,
+ fonts-noto-core,
+ fonts-noto-cjk,
+ libgl1,
+ libgbm1,
+ libinput10,
+ libseat1,
+ libxkbcommon0,
+ systemd | systemd-standalone-sysusers,
+ pipewire | pulseaudio,
+ gstreamer1.0-plugins-base,
+ gstreamer1.0-plugins-good,
+ dbus,
+ upower,
+ polkitd | policykit-1,
+ xwayland,
+ xdg-desktop-portal,
+ xdg-utils
+Provides: veshell
+Conflicts: veshell
+Recommends:
+ network-manager,
+ bluez,
+ rtkit,
+ xdg-desktop-portal-gtk
+Description: innovative Not-Desktop environment built with Flutter and Rust
+ Veshell is a Wayland/drm compositor paired with a Flutter shell. It provides
+ a predictable, spatially organized workflow and reduces the need to manage
+ windows manually.
+ .
+ This package installs the prebuilt payload published on the GitHub release;
+ it does not build from source.

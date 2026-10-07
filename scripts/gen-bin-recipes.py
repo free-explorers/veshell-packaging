@@ -8,9 +8,10 @@ recipes therefore cannot be rendered by render-recipes.py.
 Formats:
     aur   -> PKGBUILD                     (AUR `veshell-bin`)
     rpm   -> veshell-bin.spec + changes   (OBS / COPR binary RPM)
+    deb   -> veshell-bin.dsc + debian.*   (OBS binary DEB via debtransform)
 
 Usage:
-    scripts/gen-bin-recipes.py --format aur|rpm --prebuilt-sha SHA \\
+    scripts/gen-bin-recipes.py --format aur|rpm|deb --prebuilt-sha SHA \\
         [--tag TAG] --out DIR
 """
 
@@ -33,7 +34,20 @@ FORMATS = {
         ("veshell-bin.spec.in", "veshell-bin.spec"),
         ("veshell-bin.changes.in", "veshell-bin.changes"),
     ],
+    # OBS's debtransform does not skip comment lines in a .dsc, so
+    # veshell-bin.dsc.in must stay comment-free (and colon-free).
+    "deb": [
+        ("veshell-bin.dsc.in", "veshell-bin.dsc"),
+        ("debian.control.in", "debian.control"),
+        ("debian.rules.in", "debian.rules"),
+        ("debian.changelog.in", "debian.changelog"),
+        ("debian.copyright.in", "debian.copyright"),
+        ("build.script.in", "build.script"),
+    ],
 }
+
+# Recipe files that must stay executable for the Debian tooling.
+EXECUTABLE = {"debian.rules", "build.script"}
 
 
 def load_renderer():
@@ -72,8 +86,11 @@ def main() -> int:
         if not template.is_file():
             renderer.fail(f"missing template: {template}")
         rendered = renderer.render(template.read_text(), tokens, str(template))
-        (args.out / output_name).write_text(rendered)
-        print(f"wrote {args.out / output_name}")
+        out_path = args.out / output_name
+        out_path.write_text(rendered)
+        if output_name in EXECUTABLE:
+            out_path.chmod(0o755)
+        print(f"wrote {out_path}")
     return 0
 
 

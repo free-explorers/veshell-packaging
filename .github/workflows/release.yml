@@ -275,12 +275,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Render the binary recipe and submit to OBS
+      - name: Render the binary recipes and submit to OBS
         shell: bash
         env:
           OSC_CONFIG_CONTENT: ${{ secrets.OSC_CONFIG }}
           OBS_PROJECT: ${{ vars.OBS_PROJECT }}
           OBS_PACKAGE: ${{ vars.OBS_PACKAGE || 'veshell' }}
+          OBS_DEB_REPOS: ${{ vars.OBS_DEB_REPOS }}
         run: |
           set -euo pipefail
           if [[ -z "${OSC_CONFIG_CONTENT:-}" || -z "${OBS_PROJECT:-}" ]]; then
@@ -290,12 +291,14 @@ jobs:
           install -d -m700 "$RUNNER_TEMP/osc"
           printf '%s\n' "$OSC_CONFIG_CONTENT" > "$RUNNER_TEMP/osc/oscrc"
           chmod 600 "$RUNNER_TEMP/osc/oscrc"
-          rm -rf /tmp/rpm-bin
-          python3 scripts/gen-bin-recipes.py --format rpm \
-            --prebuilt-sha "${{ needs.prebuilt.outputs.prebuilt_sha }}" \
-            --tag "$RELEASE_TAG" --out /tmp/rpm-bin
+          rm -rf /tmp/obs
+          for format in rpm deb; do
+            python3 scripts/gen-bin-recipes.py --format "$format" \
+              --prebuilt-sha "${{ needs.prebuilt.outputs.prebuilt_sha }}" \
+              --tag "$RELEASE_TAG" --out /tmp/obs
+          done
           asset="veshell-${{ needs.validate.outputs.release_id }}-x86_64.tar.zst"
-          curl -fsSL -o "/tmp/rpm-bin/$asset" \
+          curl -fsSL -o "/tmp/obs/$asset" \
             "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/$asset"
           OSC_CONFIG="$RUNNER_TEMP/osc/oscrc" \
-            scripts/obs-publish.sh /tmp/rpm-bin "$OBS_PROJECT" "$OBS_PACKAGE"
+            scripts/obs-publish.sh /tmp/obs "$OBS_PROJECT" "$OBS_PACKAGE" --format all

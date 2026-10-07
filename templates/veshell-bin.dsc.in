@@ -1,0 +1,14 @@
+Format: 3.0 (quilt)
+Source: veshell-bin
+Binary: veshell-bin
+Architecture: amd64
+Version: @DEB_VERSION@
+Maintainer: @MAINTAINER@
+Homepage: https://github.com/free-explorers/veshell
+Standards-Version: 4.6.2
+Build-Depends: debhelper-compat (= 13)
+DEBTRANSFORM-TAR: veshell-@RELEASE_ID@-x86_64.tar.zst
+DEBTRANSFORM-RELEASE: 1
+Files:
+ 00000000000000000000000000000000 0 veshell-@RELEASE_ID@-x86_64.tar.zst
+ 00000000000000000000000000000000 0 veshell-bin_@VERSION@.debian.tar.xz

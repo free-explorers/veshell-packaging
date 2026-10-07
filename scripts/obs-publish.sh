@@ -1,57 +1,123 @@
 #!/usr/bin/env bash
 # obs-publish.sh - upload a rendered binary package to the Open Build Service.
 #
-# The binary recipe is small, so its sources are uploaded directly. The source
-# package (Flutter's ~1.9 GB of pinned inputs) is not handled here: it needs a
-# server-side _service or the sources hosted where OBS can fetch them.
+# The binary recipes are small, so their sources are uploaded directly. The
+# source package (Flutter's ~1.9 GB of pinned inputs) is not handled here: it
+# needs a server-side _service or the sources hosted where OBS can fetch them.
 #
 # Environment:
-#   OSC_CONFIG   path to an oscrc holding the apiurl and credentials
+#   OSC_CONFIG     path to an oscrc holding the apiurl and credentials
+#   OBS_DEB_REPOS  repositories to add for the DEB build (default below)
 #
-# Usage: obs-publish.sh SPEC_DIR OBS_PROJECT OBS_PACKAGE [--dry-run]
-#   SPEC_DIR must contain veshell-bin.spec, veshell-bin.changes and the prebuilt
-#   tarball named after the spec's Source0 URL basename.
+# Usage: obs-publish.sh RECIPE_DIR OBS_PROJECT OBS_PACKAGE [--format rpm|deb|all] [--dry-run]
+#   RECIPE_DIR must contain the rendered recipe for the requested format(s)
+#   plus the prebuilt tarball (veshell-*.tar.zst):
+#     rpm  veshell-bin.spec, veshell-bin.changes
+#     deb  veshell-bin.dsc, debian.control, debian.rules, debian.changelog
 #   The OBS package must already exist; create it once in the OBS web UI. The
-#   openSUSE_Tumbleweed build repository is added to the project if missing.
+#   openSUSE and Debian/Ubuntu build repositories are added to the project if
+#   missing, using the distribution list advertised by the OBS instance.
 set -euo pipefail
 
-spec_dir="${1:?usage: obs-publish.sh SPEC_DIR OBS_PROJECT OBS_PACKAGE [--dry-run]}"
-project="${2:?usage: obs-publish.sh SPEC_DIR OBS_PROJECT OBS_PACKAGE [--dry-run]}"
-package="${3:?usage: obs-publish.sh SPEC_DIR OBS_PROJECT OBS_PACKAGE [--dry-run]}"
-dry_run=0
-[[ "${4:-}" == "--dry-run" ]] && dry_run=1
+usage() {
+  printf 'usage: obs-publish.sh RECIPE_DIR OBS_PROJECT OBS_PACKAGE [--format rpm|deb|all] [--dry-run]\n' >&2
+}
 
-[[ -f "$spec_dir/veshell-bin.spec" ]] || { printf 'error: missing %s/veshell-bin.spec\n' "$spec_dir" >&2; exit 1; }
+recipe_dir="${1:?$(usage)}"
+project="${2:?$(usage)}"
+package="${3:?$(usage)}"
+shift 3
+
+format=all
+dry_run=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --format) format="${2:?--format needs a value}"; shift 2 ;;
+    --format=*) format="${1#--format=}"; shift ;;
+    --dry-run) dry_run=1; shift ;;
+    *) printf 'error: unknown argument: %s\n' "$1" >&2; usage; exit 1 ;;
+  esac
+done
+case "$format" in rpm | deb | all) ;; *) printf 'error: invalid --format %s\n' "$format" >&2; exit 1 ;; esac
+
 [[ -n "${OSC_CONFIG:-}" ]] || { printf 'error: OSC_CONFIG is not set\n' >&2; exit 1; }
 command -v osc >/dev/null || { printf 'error: osc is required\n' >&2; exit 1; }
 
 osc() { command osc --config "$OSC_CONFIG" "$@"; }
 
-# OBS builds nothing until the project carries a target repository. Add the
-# openSUSE Tumbleweed repository when it is missing, preserving any others.
-ensure_repository() {
-  local current
+# Collect the recipe files to upload for the requested format(s).
+upload=()
+if [[ "$format" == rpm || "$format" == all ]]; then
+  for f in veshell-bin.spec veshell-bin.changes; do
+    [[ -f "$recipe_dir/$f" ]] || { printf 'error: missing %s/%s\n' "$recipe_dir" "$f" >&2; exit 1; }
+    upload+=("$f")
+  done
+fi
+if [[ "$format" == deb || "$format" == all ]]; then
+  for f in veshell-bin.dsc debian.control debian.rules debian.changelog; do
+    [[ -f "$recipe_dir/$f" ]] || { printf 'error: missing %s/%s\n' "$recipe_dir" "$f" >&2; exit 1; }
+    upload+=("$f")
+  done
+  for f in debian.copyright build.script; do
+    [[ -f "$recipe_dir/$f" ]] && upload+=("$f")
+  done
+fi
+
+# The prebuilt payload is shared by both recipes.
+shopt -s nullglob
+assets=("$recipe_dir"/veshell-*.tar.zst)
+shopt -u nullglob
+[[ ${#assets[@]} -gt 0 ]] || { printf 'error: no veshell-*.tar.zst in %s\n' "$recipe_dir" >&2; exit 1; }
+
+# Repositories that must exist on the project for the requested format(s).
+repos=(openSUSE_Tumbleweed)
+if [[ "$format" == deb || "$format" == all ]]; then
+  # shellcheck disable=SC2206  # intentional word splitting
+  repos+=(${OBS_DEB_REPOS:-xUbuntu_26.04 Debian_13})
+fi
+
+# Add any missing repositories. The base project/repository for each target is
+# looked up in the instance's /distributions list, so no base path is hardcoded.
+ensure_repositories() {
+  local current dists repo added=0
   current="$(mktemp)"
+  dists="$(mktemp)"
   osc meta prj "$project" > "$current"
-  if ! grep -q 'name="openSUSE_Tumbleweed"' "$current"; then
-    command -v python3 >/dev/null || {
-      printf 'error: python3 is required to add the OBS repository\n' >&2; exit 1;
-    }
-    printf 'adding the openSUSE_Tumbleweed repository to %s\n' "$project"
-    python3 - "$current" <<'PY'
+  osc api /distributions > "$dists"
+  for repo in "$@"; do
+    if grep -q "name=\"$repo\"" "$current"; then
+      continue
+    fi
+    printf 'adding the %s build repository to %s\n' "$repo" "$project"
+    if ! python3 - "$current" "$dists" "$repo" <<'PY'
 import sys
 import xml.etree.ElementTree as ET
 
-path = sys.argv[1]
-tree = ET.parse(path)
-repo = ET.SubElement(tree.getroot(), "repository", {"name": "openSUSE_Tumbleweed"})
-ET.SubElement(repo, "path", {"project": "openSUSE:Factory", "repository": "snapshot"})
-ET.SubElement(repo, "arch").text = "x86_64"
-tree.write(path, encoding="utf-8", xml_declaration=True)
+current, dists, repo = sys.argv[1], sys.argv[2], sys.argv[3]
+path = None
+for dist in ET.parse(dists).getroot().findall("distribution"):
+    if dist.findtext("reponame") == repo:
+        path = (dist.findtext("project"), dist.findtext("repository"))
+        break
+if not path or not all(path):
+    sys.exit(1)
+tree = ET.parse(current)
+repository = ET.SubElement(tree.getroot(), "repository", {"name": repo})
+ET.SubElement(repository, "path", {"project": path[0], "repository": path[1]})
+ET.SubElement(repository, "arch").text = "x86_64"
+tree.write(current, encoding="utf-8", xml_declaration=True)
 PY
-    osc meta prj "$project" -F "$current" -m "Add the openSUSE_Tumbleweed repository"
+    then
+      printf 'error: repository %s is not offered by this OBS instance\n' "$repo" >&2
+      rm -f "$current" "$dists"
+      exit 1
+    fi
+    added=1
+  done
+  if ((added)); then
+    osc meta prj "$project" -F "$current" -m "Add build repositories: $*"
   fi
-  rm -f "$current"
+  rm -f "$current" "$dists"
 }
 
 work="$(mktemp -d)"
@@ -61,9 +127,9 @@ trap 'rm -rf "$work"' EXIT
 pkg="$work/pkg"
 
 if ((dry_run)); then
-  printf 'dry run: would ensure the openSUSE_Tumbleweed repository on %s\n' "$project"
+  printf 'dry run: would ensure repositories on %s: %s\n' "$project" "${repos[*]}"
 else
-  ensure_repository
+  ensure_repositories "${repos[@]}"
 fi
 
 if ! osc checkout --output-dir "$pkg" "$project" "$package"; then
@@ -73,20 +139,28 @@ fi
 
 # Replace the tracked sources with this release's.
 find "$pkg" -maxdepth 1 -type f ! -name '.*' -delete
-cp "$spec_dir"/veshell-bin.spec "$spec_dir"/veshell-bin.changes "$pkg/"
-for asset in "$spec_dir"/veshell-*.tar.zst; do
-  [[ -e "$asset" ]] && cp "$asset" "$pkg/"
+for f in "${upload[@]}"; do
+  cp "$recipe_dir/$f" "$pkg/"
+done
+for asset in "${assets[@]}"; do
+  cp "$asset" "$pkg/"
 done
 ( cd "$pkg" && osc addremove )
 
-version="$(awk -F': *' '/^Version:/{print $2; exit}' "$spec_dir/veshell-bin.spec")"
-release="$(awk -F': *' '/^Release:/{print $2; exit}' "$spec_dir/veshell-bin.spec")"
+version=""
+if [[ -f "$recipe_dir/veshell-bin.spec" ]]; then
+  version="$(awk -F': *' '/^Version:/{print $2; exit}' "$recipe_dir/veshell-bin.spec")"
+  release="$(awk -F': *' '/^Release:/{print $2; exit}' "$recipe_dir/veshell-bin.spec" | sed 's/%{.*}//')"
+  version="${version}-${release}"
+elif [[ -f "$recipe_dir/veshell-bin.dsc" ]]; then
+  version="$(awk -F': *' '/^Version:/{print $2; exit}' "$recipe_dir/veshell-bin.dsc")"
+fi
 
 if ((dry_run)); then
-  printf 'dry run: osc package %s/%s would be committed\n' "$project" "$package"
+  printf 'dry run: osc package %s/%s would be committed (%s)\n' "$project" "$package" "${version:-unknown}"
   ( cd "$pkg" && osc status )
   exit 0
 fi
 
-( cd "$pkg" && osc commit -m "Update veshell-bin to ${version}-${release}" )
+( cd "$pkg" && osc commit -m "Update veshell-bin to ${version:-unknown}" )
 printf 'committed %s/%s\n' "$project" "$package"

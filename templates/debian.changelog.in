@@ -1,0 +1,7 @@
+veshell-bin (@DEB_VERSION@) unstable; urgency=medium
+
+  * Veshell @RELEASE_ID@ (@CHANNEL@).
+  * Prebuilt payload from the GitHub release; built without recompiling.
+
+ -- @MAINTAINER@  @DATE_RFC2822@
+

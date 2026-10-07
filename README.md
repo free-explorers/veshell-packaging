@@ -31,6 +31,12 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 │   ├── veshell.spec.in
 │   ├── veshell-bin.spec.in      # RPM veshell-bin (rendered at release time)
 │   ├── veshell-bin.changes.in
+│   ├── veshell-bin.dsc.in        # OBS binary DEB (rendered at release time)
+│   ├── debian.control.in
+│   ├── debian.rules.in
+│   ├── debian.changelog.in
+│   ├── debian.copyright.in
+│   ├── build.script.in           # restores debian/rules mode on OBS
 │   └── debian/{changelog,rules}.in
 ├── scripts/
 │   ├── build-veshell.sh         # the shared hermetic build (copied into each recipe)
@@ -38,7 +44,7 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 │   ├── build-prebuilt.sh        # build the prebuilt payload tarball
 │   ├── generate-inputs.sh       # regenerates the generated inputs + verifies pins
 │   ├── render-recipes.py        # release.json + templates -> source recipes
-│   ├── gen-bin-recipes.py       # prebuilt hash -> AUR/RPM veshell-bin recipes
+│   ├── gen-bin-recipes.py       # prebuilt hash -> AUR/RPM/DEB veshell-bin recipes
 │   ├── aur-publish.sh           # push a package to the AUR
 │   ├── copr-publish.sh          # submit the binary SRPM to COPR
 │   ├── obs-publish.sh           # commit the binary package to OBS
@@ -156,12 +162,14 @@ succeeds before the channels are set up:
 | --- | --- | --- |
 | aur | `AUR_SSH_PRIVATE_KEY` | — |
 | copr | `COPR_CONFIG` | `COPR_PROJECT` (required, e.g. `<fas-user>/veshell`) |
-| obs | `OSC_CONFIG` | `OBS_PROJECT` (required, e.g. `home:<user>`), `OBS_PACKAGE` (`veshell`) |
+| obs | `OSC_CONFIG` | `OBS_PROJECT` (required, e.g. `home:<user>`), `OBS_PACKAGE` (`veshell`), `OBS_DEB_REPOS` (`xUbuntu_26.04 Debian_13`) |
 | nix | — (GitHub OIDC only) | `VESHELL_REPO` (`free-explorers/veshell`) |
 
 Both AUR packages, the COPR project, and the OBS project/package must exist
 first; create them once in the respective web UI. The OBS job adds the
-`openSUSE_Tumbleweed` build repository to the project if it is missing.
+`openSUSE_Tumbleweed`, `xUbuntu_26.04` and `Debian_13` build repositories to
+the project if they are missing, resolving each base project from the OBS
+instance's distribution list.
 
 The channels are split by distribution so they never overlap:
 
@@ -169,7 +177,7 @@ The channels are split by distribution so they never overlap:
 | --- | --- |
 | AUR (`veshell`, `veshell-bin`, `veshell-git`) | Arch / Manjaro |
 | COPR | **Fedora** |
-| OBS | openSUSE (DEB targets later) |
+| OBS | openSUSE, Ubuntu 26.04, Debian 13 |
 | Nix | NixOS |
 
 The AUR, COPR and OBS channels ship the `veshell-bin` binary package built from
@@ -185,6 +193,44 @@ both: it carries an openSUSE branch (`%if 0%{?suse_version}`) that uses openSUSE
 package names and otherwise relies on openSUSE's automatic shared-library
 dependency generation. COPR uses the Fedora branch unchanged.
 
+Debian and Ubuntu packages are built on OBS from the same prebuilt payload
+through OBS's `debtransform`: `veshell-bin.dsc` plus `debian.control`,
+`debian.rules`, `debian.changelog` and `debian.copyright` are assembled into a
+source package whose upstream archive is the payload tarball. `veshell-bin`
+carries the Debian runtime dependency names and `Provides`/`Conflicts: veshell`.
+OBS source files do not carry a file mode, so `build.script` restores the
+executable bit on `debian/rules` before `dpkg-buildpackage` runs.
+
+### Installing from the OBS repositories
+
+Replace `<project>` with `OBS_PROJECT`, using `:` -> `:/` in the download URL
+(`home:alice` becomes `home:/alice`).
+
+openSUSE:
+
+```sh
+sudo zypper addrepo -f \
+  https://download.opensuse.org/repositories/<project>/openSUSE_Tumbleweed/ veshell
+sudo zypper --gpg-auto-import-keys refresh
+sudo zypper install veshell-bin
+```
+
+Ubuntu 26.04 and Debian 13 - the repository path selects the target
+(`xUbuntu_26.04` or `Debian_13`):
+
+```sh
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://build.opensuse.org/projects/<project>/public_key \
+  | sudo gpg --dearmor -o /etc/apt/keyrings/veshell.gpg
+echo "deb [signed-by=/etc/apt/keyrings/veshell.gpg] https://download.opensuse.org/repositories/<project>/xUbuntu_26.04/ ./" \
+  | sudo tee /etc/apt/sources.list.d/veshell.list
+sudo apt update && sudo apt install veshell-bin
+```
+
+`veshell-bin` then upgrades with `zypper up` or `apt upgrade` like any other
+repository. It `Provides`/`Conflicts: veshell`, so it cannot be installed next
+to the source package.
+
 ### Compliance note
 
 These recipes are **source packages** and are built entirely with
@@ -196,7 +242,8 @@ Debian and Fedora forbid relying on prebuilt binaries that are themselves not
 built from source in the archive. A main-repo upload would additionally require
 separate `flutter-sdk` and `flutter-engine` source packages that build those
 artifacts from source. Until that exists upstream, target the AUR, COPR and
-PPAs. See `docs/building.md` for the upstream build contract.
+the OBS repositories (openSUSE, Debian, Ubuntu). See `docs/building.md` for the
+upstream build contract.
 
 ## Building
 
@@ -280,13 +327,20 @@ non-LTO final link cannot resolve its symbols and the link fails with undefined
   (first push, idempotent re-run, and `--dry-run`); the `veshell-bin` recipe is
   validated with `makepkg --printsrcinfo`.
 - **OBS / COPR**: `scripts/obs-publish.sh` and `scripts/copr-publish.sh`
-  exercised against stubbed `osc`/`rpmbuild`; the `veshell-bin` RPM spec is
-  rendered from the manifest. The `osc` invocations were re-checked against
-  `osc` 1.27 (`--config` and `--output-dir`; the older `-c`/positional-dir forms
-  are not accepted). Not built on a real service here (no OBS/COPR credentials,
-  no `rpmbuild` on the validation host).
+  exercised against stubbed `osc`/`rpmbuild`; the `veshell-bin` RPM spec and the
+  `debtransform` DEB recipe (`veshell-bin.dsc` plus `debian.*`) are rendered from
+  the manifest. The `osc` invocations were re-checked against `osc` 1.27
+  (`--config` and `--output-dir`; the older `-c`/positional-dir forms are not
+  accepted). Build repositories are resolved from the instance's
+  `/distributions` list, so no base project path is hardcoded. Not built on a
+  real service here (no OBS/COPR credentials, no `rpmbuild` on the validation
+  host).
 - **Fedora**: recipe supplied; not built here (no `rpmbuild` available on the
   validation host).
-- **Debian**: recipe supplied; not built here (no `debhelper` available on the
-  validation host). The payload itself is exercised by the project's
+- **Debian / Ubuntu**: source recipe supplied; the OBS binary recipe was
+  validated locally with the upstream `debtransform` / `debtransformarchive`
+  scripts - they produce a clean `Format: 3.0 (quilt)` source package, and the
+  `debian/rules` install step re-attaches the `usr/` top level that
+  `dpkg-source` strips. Not built here (no `debhelper` on the validation host).
+  The payload itself is exercised by the project's
   `extra/tests/packaging_install.sh`.
