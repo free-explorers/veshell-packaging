@@ -88,7 +88,7 @@ done
 log "extracting Flutter SDK"
 rm -rf "$dest/flutter-sdk"
 mkdir -p "$dest/flutter-sdk"
-tar -xJf "$downloads/${KIND_NAME[sdk]}" -C "$dest/flutter-sdk" --strip-components=1
+tar --no-same-owner -xJf "$downloads/${KIND_NAME[sdk]}" -C "$dest/flutter-sdk" --strip-components=1
 
 for kind in patched_sdk patched_sdk_product linux_x64_artifacts linux_x64_debug_gtk linux_x64_profile_gtk linux_x64_release_gtk; do
   install -m644 "$downloads/${KIND_NAME[$kind]}" "$dest/artifacts/${KIND_NAME[$kind]}"
@@ -99,12 +99,12 @@ install -m644 "$downloads/${KIND_NAME[engine]}" "$dest/engine.tar.gz"
 log "extracting Cargo vendor tree"
 rm -rf "$dest/cargo-vendor"
 mkdir -p "$dest/cargo-vendor"
-tar -xf "$downloads/${KIND_NAME[cargo_vendor]}" -C "$dest/cargo-vendor"
+tar --no-same-owner -xf "$downloads/${KIND_NAME[cargo_vendor]}" -C "$dest/cargo-vendor"
 
 log "extracting pub cache"
 rm -rf "$dest/pubcache"
 mkdir -p "$dest/pubcache"
-tar -xf "$downloads/${KIND_NAME[pubcache]}" -C "$dest/pubcache"
+tar --no-same-owner -xf "$downloads/${KIND_NAME[pubcache]}" -C "$dest/pubcache"
 
 printf '\ninputs ready in %s\n' "$dest"
 printf '  FLUTTER_SDK_DIR=%s\n' "$dest/flutter-sdk"

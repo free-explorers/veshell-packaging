@@ -155,9 +155,22 @@ jobs:
             echo 'Required engine release does not target the pinned engine commit; refusing to build.' >&2
             exit 1
           }
+          engine_helper="$ENGINE_SOURCE/import-release.sh"
+          if [[ ! -f $engine_helper ]]; then
+            # Some Nix versions keep the fetched tree in the fetcher cache, so the
+            # store path is not directly readable. Fall back to a checkout of the
+            # same revision, which is pinned by this checkout.
+            echo "engine source $ENGINE_SOURCE is not readable; using a pinned checkout" >&2
+            engine_checkout="$RUNNER_TEMP/flutter-engine-nix"
+            rm -rf "$engine_checkout"
+            git clone --quiet https://github.com/free-explorers/flutter-engine-nix "$engine_checkout"
+            git -C "$engine_checkout" checkout --quiet "$ENGINE_SOURCE_REVISION"
+            engine_helper="$engine_checkout/import-release.sh"
+          fi
+          [[ -f $engine_helper ]]
           if ! EXPECTED_ENGINE_OUTPUT="$RAW_ENGINE_OUTPUT" EXPECTED_RAW_ENGINE_OUTPUT="$RAW_ENGINE_OUTPUT" \
             EXPECTED_RUNTIME_OUTPUT="$RUNTIME_OUTPUT" \
-            bash "$ENGINE_SOURCE/import-release.sh" "$ENGINE_SOURCE_REVISION" "$ENGINE_RELEASE_TAG" \
+            bash "$engine_helper" "$ENGINE_SOURCE_REVISION" "$ENGINE_RELEASE_TAG" \
               engine refs/heads/main --trust-github-release; then
             echo 'Required engine release could not be authenticated/imported. No engine build will be attempted.' >&2
             exit 1
