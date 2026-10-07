@@ -24,6 +24,7 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 .
 ├── release.json                 # release manifest, single source of truth
 ├── release.schema.json          # JSON Schema for the manifest
+├── .github/workflows/           # release.yml (distro channels) and nix-package-release.yml (Nix)
 ├── templates/                   # recipe templates rendered from the manifest
 │   ├── PKGBUILD.in
 │   ├── PKGBUILD-bin.in          # AUR veshell-bin (rendered at release time)
@@ -42,6 +43,9 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 │   ├── copr-publish.sh          # submit the binary SRPM to COPR
 │   ├── obs-publish.sh           # commit the binary package to OBS
 │   └── sync-helpers.sh          # copies build-veshell.sh into each recipe
+├── nix/                         # Nix closure export/import helpers (run in a Veshell checkout)
+│   ├── export-release.sh
+│   └── import-release.sh
 ├── ci/
 │   ├── arch-deps.txt            # Arch build dependencies for the CI container
 │   └── prebuilt-in-container.sh # release build entry point for the container
@@ -129,10 +133,12 @@ hand is a mistake: change `release.json` or the templates and re-render.
    submits it to COPR.
 5. **obs** — commits the `veshell-bin` spec, changes and prebuilt payload to the
    Open Build Service.
-6. **nix** — calls the attested-closure workflow
-   (`.github/workflows/nix-package-release.yml`) to publish the Nix channel. It
-   needs the separately published `flutter-engine-nix` engine release; the Nix
-   toolchain is not used by the distro recipes.
+6. **nix** — the second workflow `.github/workflows/nix-package-release.yml` runs
+   on the same release event. It checks out the pinned Veshell source for the
+   `nix/` expressions, imports the separately published `flutter-engine-nix`
+   engine closure (it never builds the engine), builds the package/SDK/shell
+   closures, and uploads the attested `package-*` assets to the same release. The
+   Nix toolchain is not used by the distro recipes.
 
 `scripts/fetch-inputs.sh` downloads and checksum-verifies the pinned SDK/engine
 artifacts and the two generated inputs before the build, so nothing is fetched
@@ -146,6 +152,7 @@ succeeds before the channels are set up:
 | aur | `AUR_SSH_PRIVATE_KEY` | — |
 | copr | `COPR_CONFIG` | `COPR_PROJECT` (required, e.g. `<fas-user>/veshell`) |
 | obs | `OSC_CONFIG` | `OBS_PROJECT` (required, e.g. `home:<user>`), `OBS_PACKAGE` (`veshell`) |
+| nix | — (GitHub OIDC only) | `VESHELL_REPO` (`free-explorers/veshell`) |
 
 Both AUR packages, the COPR project, and the OBS project/package must exist
 first; create them once in the respective web UI.
