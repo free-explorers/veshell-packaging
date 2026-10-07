@@ -65,6 +65,6 @@ jobs:
           echo "===== creating $TARGET ====="
           copr create "$TARGET" "${args[@]}" \
             --description "Veshell binary packages (free-explorers)" \
-            --instructions "sudo dnf copr enable $TARGET" \
+            --instructions "sudo dnf copr enable $TARGET"
           echo "===== verify ====="
           copr get "$TARGET" || true
