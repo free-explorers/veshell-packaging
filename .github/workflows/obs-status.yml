@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Install tooling
         shell: bash
-        run: zypper --non-interactive install osc curl findutils
+        run: zypper --non-interactive install osc curl findutils git
 
       - name: Query OBS
         shell: bash
