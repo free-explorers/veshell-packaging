@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "prerelease": null,
   "channel": "beta",
-  "date": "2026-10-06T00:00:00Z",
+  "date": "2026-10-07T00:00:00Z",
   "commit": "f7180fe48c8ba75c08d3ae7c38e6b7bc27ea85fe",
-  "maintainer": "Veshell packaging <packaging@example.invalid>",
+  "maintainer": "Adrien Peslerbe <adrien@pesler.be>",
   "polkit_helper": "/usr/lib/polkit-1/polkit-agent-helper-1",
   "mirrors": {
     "source": "https://github.com/free-explorers/veshell/archive",

@@ -43,7 +43,10 @@ env:
 
 jobs:
   validate:
-    if: github.repository == 'free-explorers/veshell-packaging'
+    if: >-
+      github.repository == 'free-explorers/veshell-packaging' &&
+      (github.event_name == 'workflow_dispatch' ||
+       startsWith(github.event.release.tag_name, 'v'))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:

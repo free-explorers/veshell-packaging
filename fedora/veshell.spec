@@ -160,5 +160,5 @@ bash %{SOURCE1} install
 %{_userunitdir}/veshell-shutdown.target
 
 %changelog
-* Tue Oct 06 2026 Veshell packaging <packaging@example.invalid> - 0.1.0-1
+* Wed Oct 07 2026 Adrien Peslerbe <adrien@pesler.be> - 0.1.0-1
 - Veshell 0.1.0 (beta).
