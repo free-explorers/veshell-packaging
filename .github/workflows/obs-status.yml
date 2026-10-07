@@ -1,0 +1,42 @@
+name: OBS status (temporary)
+
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        default: home:PapyElGringo
+      package:
+        default: veshell
+
+jobs:
+  status:
+    runs-on: ubuntu-24.04
+    container: opensuse/tumbleweed:latest
+    timeout-minutes: 15
+    steps:
+      - name: Install tooling
+        shell: bash
+        run: zypper --non-interactive install osc curl findutils
+
+      - name: Query OBS
+        shell: bash
+        env:
+          OSC_CONFIG_CONTENT: ${{ secrets.OSC_CONFIG }}
+        run: |
+          set -uo pipefail
+          install -d -m700 "$HOME/.config/osc"
+          printf '%s\n' "$OSC_CONFIG_CONTENT" > "$HOME/.config/osc/oscrc"
+          chmod 600 "$HOME/.config/osc/oscrc"
+          p="${{ inputs.project }}"; k="${{ inputs.package }}"
+
+          echo "=== build results ==="
+          osc results "$p" "$k" || true
+
+          echo; echo "=== source revision ==="
+          osc api "/source/$p/$k" 2>/dev/null | head -12 || true
+
+          echo; echo "=== debian.control (dlopen deps present?) ==="
+          osc cat "$p" "$k" debian.control 2>/dev/null | grep -nE "Depends|libegl1|libwayland-server0|libxkbcommon-x11-0" || echo "(could not read)"
+
+          echo; echo "=== spec (dlopen soname requires present?) ==="
+          osc cat "$p" "$k" veshell-bin.spec 2>/dev/null | grep -nE "libEGL\.so|libwayland-server\.so|libxkbcommon-x11\.so" || echo "(could not read)"
