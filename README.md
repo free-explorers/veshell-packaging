@@ -161,7 +161,7 @@ succeeds before the channels are set up:
 | Job | Secret | Variables (default) |
 | --- | --- | --- |
 | aur | `AUR_SSH_PRIVATE_KEY` | — |
-| copr | `COPR_CONFIG` | `COPR_PROJECT` (required, e.g. `<fas-user>/veshell`) |
+| copr | `COPR_CONFIG` | `COPR_PROJECT` (required, e.g. `@<fas-group>/veshell`) |
 | obs | `OSC_CONFIG` | `OBS_PROJECT` (required, e.g. `home:<user>`), `OBS_PACKAGE` (`veshell`), `OBS_DEB_REPOS` (`xUbuntu_26.04 Debian_13`) |
 | nix | — (GitHub OIDC only) | `VESHELL_REPO` (`free-explorers/veshell`) |
 
@@ -192,6 +192,14 @@ install path, and OBS gets no Fedora targets. The same `veshell-bin.spec` serves
 both: it carries an openSUSE branch (`%if 0%{?suse_version}`) that uses openSUSE
 package names and otherwise relies on openSUSE's automatic shared-library
 dependency generation. COPR uses the Fedora branch unchanged.
+
+The COPR project is owned by the Fedora `free-explorers` group
+(`@free-explorers/veshell`, chroots `fedora-44`, `fedora-45`, `rawhide`):
+
+```sh
+sudo dnf copr enable @free-explorers/veshell
+sudo dnf install veshell-bin
+```
 
 Debian and Ubuntu packages are built on OBS from the same prebuilt payload
 through OBS's `debtransform`: `veshell-bin.dsc` plus `debian.control`,
