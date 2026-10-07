@@ -6,9 +6,14 @@
 # Installs the prebuilt payload published on the GitHub release
 # (veshell-<release>-x86_64.tar.zst). Prefer the source spec
 # (fedora/veshell.spec) when you want a fully verifiable source build.
+#
+# Builds on Fedora (COPR) and openSUSE (OBS). Runtime dependencies differ per
+# distribution: Fedora names on one branch, openSUSE names on the other, and
+# openSUSE relies on its automatic shared-library dependency generation.
 
 %global debug_package %{nil}
 %global prebuilt_sha256 @PREBUILT_SHA256@
+%{!?_userunitdir:%global _userunitdir %{_prefix}/lib/systemd/user}
 
 Name:           veshell-bin
 Version:        @RPM_VERSION@
@@ -22,6 +27,28 @@ ExclusiveArch:  x86_64
 Provides:       veshell = %{version}-%{release}
 Conflicts:      veshell
 
+%if 0%{?suse_version}
+# openSUSE: shared-library requirements are generated automatically from the
+# packaged ELF objects, so only the non-library runtime pieces are listed here.
+Requires:       dbus-1
+Requires:       fontconfig
+Requires:       google-noto-sans-cjk-fonts
+Requires:       google-noto-sans-fonts
+Requires:       google-roboto-fonts
+Requires:       gstreamer-plugins-base
+Requires:       gstreamer-plugins-good
+Requires:       pipewire-pulseaudio
+Requires:       polkit
+Requires:       upower
+Requires:       xdg-desktop-portal
+Requires:       xdg-utils
+Requires:       xwayland
+
+Recommends:     NetworkManager
+Recommends:     bluez
+Recommends:     rtkit
+Recommends:     xdg-desktop-portal-gtk
+%else
 Requires:       fontconfig
 Requires:       google-roboto-fonts
 Requires:       google-noto-sans-fonts
@@ -52,6 +79,7 @@ Recommends:     NetworkManager
 Recommends:     bluez
 Recommends:     rtkit
 Recommends:     xdg-desktop-portal-gtk
+%endif
 
 BuildRequires:  zstd
 

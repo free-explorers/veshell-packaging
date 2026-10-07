@@ -165,11 +165,11 @@ pinned inputs exceed the services' upload limits. A source package on those
 services needs a server-side `_service` or builder-side fetching, and is worth
 doing once we publish our own engine.
 
-Fedora RPMs are built on COPR, not OBS: `%if`-free, Fedora-only packaging is
-simpler there, and `dnf copr enable` is the idiomatic Fedora install path. OBS
-must not be given Fedora targets. Its spec therefore needs openSUSE dependency
-names (or `%if 0%{?suse_version}` branches) before the DEB/openSUSE targets are
-useful; COPR uses the current Fedora spec unchanged.
+Fedora RPMs are built on COPR, not OBS: `dnf copr enable` is the idiomatic Fedora
+install path, and OBS gets no Fedora targets. The same `veshell-bin.spec` serves
+both: it carries an openSUSE branch (`%if 0%{?suse_version}`) that uses openSUSE
+package names and otherwise relies on openSUSE's automatic shared-library
+dependency generation. COPR uses the Fedora branch unchanged.
 
 ### Compliance note
 
