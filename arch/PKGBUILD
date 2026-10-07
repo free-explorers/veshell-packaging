@@ -68,7 +68,7 @@ source=(
   "linux-x64-debug_flutter-gtk.zip::https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/linux-x64-debug/linux-x64-flutter-gtk.zip"
   "linux-x64-profile_flutter-gtk.zip::https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/linux-x64-profile/linux-x64-flutter-gtk.zip"
   "linux-x64-release_flutter-gtk.zip::https://storage.googleapis.com/flutter_infra_release/flutter/a804b261645ef8c13eb3d5c44a5c2fb0340c5539/linux-x64-release/linux-x64-flutter-gtk.zip"
-  "linux-engine-sdk-release-x86_64-${_flutter_engine_revision}.tar.gz::https://github.com/meta-flutter/flutter-engine/releases/download/linux-engine-sdk-release-x86_64-a804b261645ef8c13eb3d5c44a5c2fb0340c5539/linux-engine-sdk-release-x86_64-a804b261645ef8c13eb3d5c44a5c2fb0340c5539.tar.gz"
+  "linux-engine-sdk-release-x86_64-${_flutter_engine_revision}.tar.gz::https://github.com/free-explorers/flutter-engine/releases/download/linux-engine-sdk-release-x86_64-a804b261645ef8c13eb3d5c44a5c2fb0340c5539/linux-engine-sdk-release-x86_64-a804b261645ef8c13eb3d5c44a5c2fb0340c5539.tar.gz"
   "veshell-cargo-vendor-0.1.0.tar.zst::$_input_mirror/veshell-cargo-vendor-0.1.0.tar.zst"
   "veshell-pubcache-0.1.0.tar.zst::$_input_mirror/veshell-pubcache-0.1.0.tar.zst"
 )
@@ -82,7 +82,7 @@ sha256sums=(
   'e324b676106db415bec41d211caeb7a5137d061704f7af83264f382b4e2ff354'  # linux-x64 debug gtk
   '0a507e7c6f49c8905efc809808e1a2ac21bcf2c732b82c10e74f8f1e6d1828ea'  # linux-x64 profile gtk
   '3b357f3df3549c69535d92e8e300a66e1057876dc8fed45a8aae7cf7681b7ec4'  # linux-x64 release gtk
-  '764e05ba612aaf943523c76a87dd89952f44984a3ec1b48c03aa8b227dafb56c'  # embedder engine
+  '539254d41100c2dc338920dae968dc2cf0b7c35e5f00764ab5d24ebc37712f87'  # embedder engine
   'a99abcb0d71d55620df66fe6a81b4543273ca6143311d6c145a204d2241af21f'  # cargo vendor
   '90b0a95878c6735221301b38f363b8e243c679da11aa439286a302ee2c85e264'  # pub cache
 )
