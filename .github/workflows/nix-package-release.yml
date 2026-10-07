@@ -112,6 +112,16 @@ jobs:
             cores = 4
             experimental-features = nix-command flakes
 
+      - name: Make the Nix tools available to sudo
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The closure import runs `sudo nix-store`, and sudo resets PATH to
+          # secure_path, which does not include the Nix profile.
+          sudo ln -sf "$(command -v nix-store)" /usr/local/bin/nix-store
+          sudo ln -sf "$(command -v nix)" /usr/local/bin/nix
+          sudo nix-store --version
+
       - name: Predict engine outputs without building
         id: identity
         working-directory: .veshell
