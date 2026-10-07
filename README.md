@@ -166,11 +166,12 @@ The channels are split by distribution so they never overlap:
 | OBS | openSUSE (DEB targets later) |
 | Nix | NixOS |
 
-All of them ship the `veshell-bin` binary package built from the prebuilt
-payload (the same model as the AUR `veshell-bin`), because Flutter's ~1.9 GB of
-pinned inputs exceed the services' upload limits. A source package on those
-services needs a server-side `_service` or builder-side fetching, and is worth
-doing once we publish our own engine.
+The AUR, COPR and OBS channels ship the `veshell-bin` binary package built from
+the prebuilt payload (the same model as the AUR `veshell-bin`), because Flutter's
+~1.9 GB of pinned inputs exceed the services' upload limits. A source package on
+those services needs a server-side `_service` or builder-side fetching, and is
+worth doing once we publish our own engine. The Nix channel instead builds from
+source with Nix and publishes an attested closure.
 
 Fedora RPMs are built on COPR, not OBS: `dnf copr enable` is the idiomatic Fedora
 install path, and OBS gets no Fedora targets. The same `veshell-bin.spec` serves
