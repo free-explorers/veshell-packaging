@@ -51,8 +51,9 @@ jobs:
 
           rm -rf /tmp/inputs /tmp/obs
           mkdir -p /tmp/inputs
-          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
-            --pattern "$asset" --pattern SHA256SUMS --dir /tmp/inputs --clobber
+          release_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG"
+          curl -fsSL -o "/tmp/inputs/$asset" "$release_url/$asset"
+          curl -fsSL -o /tmp/inputs/SHA256SUMS "$release_url/SHA256SUMS"
           prebuilt_sha="$(cut -d' ' -f1 /tmp/inputs/SHA256SUMS)"
 
           for format in rpm deb; do
