@@ -1,0 +1,56 @@
+name: OBS status
+
+# Temporary diagnostics: report the OBS build results for the veshell package.
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: OBS project
+        required: true
+        type: string
+        default: home:PapyElGringo
+      package:
+        description: OBS package
+        required: true
+        type: string
+        default: veshell
+
+permissions:
+  contents: read
+
+jobs:
+  status:
+    runs-on: ubuntu-24.04
+    container: opensuse/tumbleweed:latest
+    timeout-minutes: 20
+    steps:
+      - name: Install osc
+        shell: bash
+        run: zypper --non-interactive install osc
+
+      - name: Report OBS results
+        shell: bash
+        env:
+          OSC_CONFIG_CONTENT: ${{ secrets.OSC_CONFIG }}
+          PROJECT: ${{ inputs.project }}
+          PACKAGE: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+          install -d -m700 "$RUNNER_TEMP/osc"
+          printf '%s\n' "$OSC_CONFIG_CONTENT" > "$RUNNER_TEMP/osc/oscrc"
+          chmod 600 "$RUNNER_TEMP/osc/oscrc"
+          osc() { command osc --config "$RUNNER_TEMP/osc/oscrc" "$@"; }
+
+          echo "===== project meta ====="
+          osc meta prj "$PROJECT"
+
+          echo "===== osc results ====="
+          osc results "$PROJECT" "$PACKAGE" || true
+
+          for repo in $(osc results "$PROJECT" "$PACKAGE" 2>/dev/null | tail -n +3 | awk '{print $1}' | sort -u); do
+            arch="$(osc results "$PROJECT" "$PACKAGE" 2>/dev/null | awk -v r="$repo" '$1==r && $3!="succeeded" && $3!="disabled" && $3!="excluded" {print $2; exit}')"
+            if [ -n "${arch:-}" ]; then
+              echo "===== buildlog tail: $repo/$arch ====="
+              osc buildlog "$PROJECT" "$repo" "$arch" "$PACKAGE" 2>&1 | tail -n 80 || true
+            fi
+          done
