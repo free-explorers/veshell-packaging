@@ -1,0 +1,11 @@
+# build / scratch
+/out/
+/.inputs/
+/.veshell/
+/engine-build/
+arch/pkg/
+arch/src/
+arch/*.pkg.tar.*
+arch/*.log
+*/debian/.build-inputs/
+__pycache__/
