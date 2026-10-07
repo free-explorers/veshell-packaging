@@ -10,7 +10,7 @@
   "polkit_helper": "/usr/lib/polkit-1/polkit-agent-helper-1",
   "mirrors": {
     "source": "https://github.com/free-explorers/veshell/archive",
-    "inputs": "https://github.com/free-explorers/veshell/releases/download/packaging-inputs-v0.1.0"
+    "inputs": "https://github.com/free-explorers/veshell-packaging/releases/download/packaging-inputs-v0.1.0"
   },
   "flutter": {
     "version": "3.47.2",

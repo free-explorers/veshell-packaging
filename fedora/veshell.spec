@@ -22,7 +22,7 @@
 %global flutter_version 3.47.2
 %global engine_revision a804b261645ef8c13eb3d5c44a5c2fb0340c5539
 %global artifact_base https://storage.googleapis.com/flutter_infra_release/flutter/%{engine_revision}
-%global input_mirror https://github.com/free-explorers/veshell/releases/download/packaging-inputs-v0.1.0
+%global input_mirror https://github.com/free-explorers/veshell-packaging/releases/download/packaging-inputs-v0.1.0
 
 %global debug_package %{nil}
 

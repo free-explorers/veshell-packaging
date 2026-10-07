@@ -56,7 +56,7 @@ options=('!lto')
 _veshell_commit=f7180fe48c8ba75c08d3ae7c38e6b7bc27ea85fe
 _flutter_version=3.47.2
 _flutter_engine_revision=a804b261645ef8c13eb3d5c44a5c2fb0340c5539
-_input_mirror="${VESHELL_INPUT_MIRROR:-https://github.com/free-explorers/veshell/releases/download/packaging-inputs-v0.1.0}"
+_input_mirror="${VESHELL_INPUT_MIRROR:-https://github.com/free-explorers/veshell-packaging/releases/download/packaging-inputs-v0.1.0}"
 
 source=(
   "veshell::git+https://github.com/free-explorers/veshell.git#commit=$_veshell_commit"
