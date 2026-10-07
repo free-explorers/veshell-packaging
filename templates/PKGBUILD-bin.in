@@ -17,7 +17,7 @@ url="https://github.com/free-explorers/veshell"
 license=('GPL-3.0-or-later')
 depends=(
   'fontconfig' 'ttf-roboto' 'noto-fonts' 'noto-fonts-cjk'
-  'libglvnd' 'mesa' 'libgbm'
+  'libglvnd' 'mesa'
   'libinput' 'seatd' 'systemd-libs' 'libxkbcommon'
   'libdisplay-info'
   'pipewire' 'libpulse'

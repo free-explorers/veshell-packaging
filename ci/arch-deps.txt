@@ -16,7 +16,6 @@ gtk3
 libpulse
 libinput
 seatd
-libgbm
 mesa
 openssl
 pipewire

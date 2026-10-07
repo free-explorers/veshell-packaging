@@ -22,7 +22,7 @@ url="https://github.com/free-explorers/veshell"
 license=('GPL-3.0-or-later')
 depends=(
   'fontconfig' 'ttf-roboto' 'noto-fonts' 'noto-fonts-cjk'
-  'libglvnd' 'mesa' 'libgbm'
+  'libglvnd' 'mesa'
   'libinput' 'seatd' 'systemd-libs' 'libxkbcommon'
   'libdisplay-info'
   'pipewire' 'libpulse'
@@ -34,7 +34,7 @@ makedepends=(
   'rust' 'clang' 'cmake' 'ninja' 'pkgconf' 'git'
   'unzip' 'zstd' 'xz'
   'gtk3' 'libpulse'
-  'libinput' 'seatd' 'libgbm' 'mesa' 'openssl'
+  'libinput' 'seatd' 'mesa' 'openssl'
   'pipewire' 'gstreamer' 'gst-plugins-base-libs'
   'libxkbcommon' 'libdisplay-info' 'wayland' 'systemd-libs'
   'vulkan-icd-loader'
