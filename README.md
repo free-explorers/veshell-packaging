@@ -275,8 +275,10 @@ non-LTO final link cannot resolve its symbols and the link fails with undefined
   validated with `makepkg --printsrcinfo`.
 - **OBS / COPR**: `scripts/obs-publish.sh` and `scripts/copr-publish.sh`
   exercised against stubbed `osc`/`rpmbuild`; the `veshell-bin` RPM spec is
-  rendered from the manifest. Not built on a real service here (no OBS/COPR
-  credentials, no `rpmbuild` on the validation host).
+  rendered from the manifest. The `osc` invocations were re-checked against
+  `osc` 1.27 (`--config` and `--output-dir`; the older `-c`/positional-dir forms
+  are not accepted). Not built on a real service here (no OBS/COPR credentials,
+  no `rpmbuild` on the validation host).
 - **Fedora**: recipe supplied; not built here (no `rpmbuild` available on the
   validation host).
 - **Debian**: recipe supplied; not built here (no `debhelper` available on the

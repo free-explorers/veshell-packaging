@@ -24,32 +24,33 @@ dry_run=0
 [[ -n "${OSC_CONFIG:-}" ]] || { printf 'error: OSC_CONFIG is not set\n' >&2; exit 1; }
 command -v osc >/dev/null || { printf 'error: osc is required\n' >&2; exit 1; }
 
-osc() { command osc -c "$OSC_CONFIG" "$@"; }
+osc() { command osc --config "$OSC_CONFIG" "$@"; }
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
+pkg="$work/pkg/$package"
 
-if ! osc checkout "$project" "$package" "$work/pkg"; then
+if ! osc checkout --output-dir "$work/pkg" "$project" "$package"; then
   printf 'error: OBS package %s/%s is not reachable; create it first\n' "$project" "$package" >&2
   exit 1
 fi
 
 # Replace the tracked sources with this release's.
-find "$work/pkg" -maxdepth 1 -type f ! -name '.*' -delete
-cp "$spec_dir"/veshell-bin.spec "$spec_dir"/veshell-bin.changes "$work/pkg/"
+find "$pkg" -maxdepth 1 -type f ! -name '.*' -delete
+cp "$spec_dir"/veshell-bin.spec "$spec_dir"/veshell-bin.changes "$pkg/"
 for asset in "$spec_dir"/veshell-*.tar.zst; do
-  [[ -e "$asset" ]] && cp "$asset" "$work/pkg/"
+  [[ -e "$asset" ]] && cp "$asset" "$pkg/"
 done
-( cd "$work/pkg" && osc addremove )
+( cd "$pkg" && osc addremove )
 
 version="$(awk -F': *' '/^Version:/{print $2; exit}' "$spec_dir/veshell-bin.spec")"
 release="$(awk -F': *' '/^Release:/{print $2; exit}' "$spec_dir/veshell-bin.spec")"
 
 if ((dry_run)); then
   printf 'dry run: osc package %s/%s would be committed\n' "$project" "$package"
-  ( cd "$work/pkg" && osc status )
+  ( cd "$pkg" && osc status )
   exit 0
 fi
 
-( cd "$work/pkg" && osc commit -m "Update veshell-bin to ${version}-${release}" )
+( cd "$pkg" && osc commit -m "Update veshell-bin to ${version}-${release}" )
 printf 'committed %s/%s\n' "$project" "$package"
