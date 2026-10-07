@@ -77,10 +77,10 @@ jobs:
 
           echo "===== osc results ====="
           osc results "$OBS_PROJECT" "$OBS_PACKAGE" || true
-          for repo in xUbuntu_26.04 Debian_13; do
-            echo "===== $repo build reason ====="
-            osc api "/build/$OBS_PROJECT/$repo/x86_64/$OBS_PACKAGE/_reason" 2>&1 | tail -n 6 || true
-          done
+          echo "===== Debian_13 buildinfo (unresolvable detail) ====="
+          osc buildinfo "$OBS_PROJECT" "$OBS_PACKAGE" Debian_13 x86_64 2>&1 | tail -n 30 || true
+          echo "===== Debian_13 result detail ====="
+          osc api "/build/$OBS_PROJECT/Debian_13/x86_64/$OBS_PACKAGE/_result" 2>&1 | tail -n 25 || true
           for repo in xUbuntu_26.04 Debian_13; do
             echo "===== $repo buildlog tail ====="
             osc buildlog "$OBS_PROJECT" "$OBS_PACKAGE" "$repo" x86_64 2>&1 | tail -n 150 || true
