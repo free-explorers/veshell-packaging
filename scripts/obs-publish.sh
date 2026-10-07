@@ -11,7 +11,8 @@
 # Usage: obs-publish.sh SPEC_DIR OBS_PROJECT OBS_PACKAGE [--dry-run]
 #   SPEC_DIR must contain veshell-bin.spec, veshell-bin.changes and the prebuilt
 #   tarball named after the spec's Source0 URL basename.
-#   The OBS package must already exist; create it once in the OBS web UI.
+#   The OBS package must already exist; create it once in the OBS web UI. The
+#   openSUSE_Tumbleweed build repository is added to the project if missing.
 set -euo pipefail
 
 spec_dir="${1:?usage: obs-publish.sh SPEC_DIR OBS_PROJECT OBS_PACKAGE [--dry-run]}"
@@ -26,9 +27,42 @@ command -v osc >/dev/null || { printf 'error: osc is required\n' >&2; exit 1; }
 
 osc() { command osc --config "$OSC_CONFIG" "$@"; }
 
+# OBS builds nothing until the project carries a target repository. Add the
+# openSUSE Tumbleweed repository when it is missing, preserving any others.
+ensure_repository() {
+  local current
+  current="$(mktemp)"
+  osc meta prj "$project" > "$current"
+  if ! grep -q 'name="openSUSE_Tumbleweed"' "$current"; then
+    command -v python3 >/dev/null || {
+      printf 'error: python3 is required to add the OBS repository\n' >&2; exit 1;
+    }
+    printf 'adding the openSUSE_Tumbleweed repository to %s\n' "$project"
+    python3 - "$current" <<'PY'
+import sys
+import xml.etree.ElementTree as ET
+
+path = sys.argv[1]
+tree = ET.parse(path)
+repo = ET.SubElement(tree.getroot(), "repository", {"name": "openSUSE_Tumbleweed"})
+ET.SubElement(repo, "path", {"project": "openSUSE:Factory", "repository": "snapshot"})
+ET.SubElement(repo, "arch").text = "x86_64"
+tree.write(path, encoding="utf-8", xml_declaration=True)
+PY
+    osc meta prj "$project" -F "$current" -m "Add the openSUSE_Tumbleweed repository"
+  fi
+  rm -f "$current"
+}
+
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 pkg="$work/pkg/$package"
+
+if ((dry_run)); then
+  printf 'dry run: would ensure the openSUSE_Tumbleweed repository on %s\n' "$project"
+else
+  ensure_repository
+fi
 
 if ! osc checkout --output-dir "$work/pkg" "$project" "$package"; then
   printf 'error: OBS package %s/%s is not reachable; create it first\n' "$project" "$package" >&2

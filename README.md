@@ -155,7 +155,8 @@ succeeds before the channels are set up:
 | nix | — (GitHub OIDC only) | `VESHELL_REPO` (`free-explorers/veshell`) |
 
 Both AUR packages, the COPR project, and the OBS project/package must exist
-first; create them once in the respective web UI.
+first; create them once in the respective web UI. The OBS job adds the
+`openSUSE_Tumbleweed` build repository to the project if it is missing.
 
 The channels are split by distribution so they never overlap:
 
