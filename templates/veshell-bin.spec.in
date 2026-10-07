@@ -111,6 +111,13 @@ cp -a usr %{buildroot}/
 %{_userunitdir}/veshell.service
 %{_userunitdir}/veshell-shutdown.target
 %license /usr/share/licenses/veshell/LICENSE
+%if 0%{?suse_version}
+# OBS rejects a package whose files land in directories that no package owns.
+%dir /usr/share/licenses/veshell
+%dir /usr/share/wayland-sessions
+%dir /usr/share/xdg-desktop-portal
+%dir /usr/share/xdg-desktop-portal/portals
+%endif
 
 %changelog
 * @DATE_RPM@ @MAINTAINER@ - @RPM_VERSION@-@RPM_RELEASE@
