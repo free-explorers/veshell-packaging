@@ -145,6 +145,63 @@ jobs:
             out/veshell-*.tar.zst out/SHA256SUMS \
             --repo "$GITHUB_REPOSITORY" --clobber
 
+  prebuilt-debian:
+    name: Prebuilt payload (Debian 13)
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    outputs:
+      prebuilt_debian_sha: ${{ steps.publish.outputs.prebuilt_debian_sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Reclaim host disk for the container build
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
+            /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Build the Debian payload in a Debian 13 container
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/work" \
+            -w /work \
+            debian:13 \
+            bash /work/ci/prebuilt-in-container-debian.sh
+          sudo chown -R "$(id -u):$(id -g)" out
+          test -f out/SHA256SUMS
+          cat out/SHA256SUMS
+
+      - name: Attest the Debian checksum manifest
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v2
+        with:
+          subject-path: out/SHA256SUMS
+
+      - name: Publish the Debian payload to the release
+        id: publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          prebuilt_debian_sha="$(cut -d' ' -f1 out/SHA256SUMS)"
+          printf 'prebuilt_debian_sha=%s\n' "$prebuilt_debian_sha" >> "$GITHUB_OUTPUT"
+          mv out/SHA256SUMS out/SHA256SUMS-debian13
+          gh release upload "$RELEASE_TAG" \
+            out/veshell-*.tar.zst out/SHA256SUMS-debian13 \
+            --repo "$GITHUB_REPOSITORY" --clobber
+
   aur:
     needs: [validate, prebuilt]
     runs-on: ubuntu-24.04
@@ -261,7 +318,7 @@ jobs:
 
   obs:
     name: Publish to OBS (openSUSE/DEB)
-    needs: [validate, prebuilt]
+    needs: [validate, prebuilt, prebuilt-debian]
     runs-on: ubuntu-24.04
     container: opensuse/tumbleweed:latest
     timeout-minutes: 45
@@ -292,13 +349,32 @@ jobs:
           printf '%s\n' "$OSC_CONFIG_CONTENT" > "$RUNNER_TEMP/osc/oscrc"
           chmod 600 "$RUNNER_TEMP/osc/oscrc"
           rm -rf /tmp/obs
-          for format in rpm deb; do
-            python3 scripts/gen-bin-recipes.py --format "$format" \
+          release_id="${{ needs.validate.outputs.release_id }}"
+          common_payload="veshell-${release_id}-x86_64.tar.zst"
+          debian_payload="veshell-${release_id}-debian13-x86_64.tar.zst"
+
+          python3 scripts/gen-bin-recipes.py --format rpm \
+            --prebuilt-sha "${{ needs.prebuilt.outputs.prebuilt_sha }}" \
+            --tag "$RELEASE_TAG" --out /tmp/obs
+
+          # One .dsc per DEB repository. Repositories named Debian_* build
+          # against Debian's libraries and use the Debian payload; the rest use
+          # the common (Arch-built) payload.
+          for repo in ${OBS_DEB_REPOS:-xUbuntu_26.04 Debian_13}; do
+            case "$repo" in
+              Debian_*) payload="$debian_payload" ;;
+              *) payload="$common_payload" ;;
+            esac
+            python3 scripts/gen-bin-recipes.py --format deb --repo "$repo" \
+              --obs-package "$OBS_PACKAGE" --payload-asset "$payload" \
               --prebuilt-sha "${{ needs.prebuilt.outputs.prebuilt_sha }}" \
               --tag "$RELEASE_TAG" --out /tmp/obs
           done
-          asset="veshell-${{ needs.validate.outputs.release_id }}-x86_64.tar.zst"
-          curl -fsSL -o "/tmp/obs/$asset" \
-            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/$asset"
+
+          for asset in "$common_payload" "$debian_payload"; do
+            curl -fsSL -o "/tmp/obs/$asset" \
+              "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/$asset"
+          done
+
           OSC_CONFIG="$RUNNER_TEMP/osc/oscrc" \
             scripts/obs-publish.sh /tmp/obs "$OBS_PROJECT" "$OBS_PACKAGE" --format all

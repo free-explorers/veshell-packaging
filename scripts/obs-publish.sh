@@ -13,7 +13,9 @@
 #   RECIPE_DIR must contain the rendered recipe for the requested format(s)
 #   plus the prebuilt tarball (veshell-*.tar.zst):
 #     rpm  veshell-bin.spec, veshell-bin.changes
-#     deb  veshell-bin.dsc, debian.control, debian.rules, debian.changelog
+#     deb  veshell-<repository>.dsc (one per repository), debian.control,
+#          debian.rules, debian.changelog
+#   plus one or more prebuilt tarballs (veshell-*.tar.zst).
 #   The OBS package must already exist; create it once in the OBS web UI. The
 #   openSUSE and Debian/Ubuntu build repositories are added to the project if
 #   missing, using the distribution list advertised by the OBS instance.
@@ -54,13 +56,20 @@ if [[ "$format" == rpm || "$format" == all ]]; then
   done
 fi
 if [[ "$format" == deb || "$format" == all ]]; then
-  for f in veshell-bin.dsc debian.control debian.rules debian.changelog; do
+  for f in debian.control debian.rules debian.changelog; do
     [[ -f "$recipe_dir/$f" ]] || { printf 'error: missing %s/%s\n' "$recipe_dir" "$f" >&2; exit 1; }
     upload+=("$f")
   done
   for f in debian.copyright build.script; do
     [[ -f "$recipe_dir/$f" ]] && upload+=("$f")
   done
+  # One .dsc per OBS repository: OBS selects <package>-<repository>.dsc, which is
+  # how the Debian repository gets the payload built against its libraries.
+  shopt -s nullglob
+  dscs=("$recipe_dir"/veshell-*.dsc)
+  shopt -u nullglob
+  [[ ${#dscs[@]} -gt 0 ]] || { printf 'error: no veshell-*.dsc in %s\n' "$recipe_dir" >&2; exit 1; }
+  for dsc in "${dscs[@]}"; do upload+=("$(basename "$dsc")"); done
 fi
 
 # The prebuilt payload is shared by both recipes.
@@ -152,8 +161,9 @@ if [[ -f "$recipe_dir/veshell-bin.spec" ]]; then
   version="$(awk -F': *' '/^Version:/{print $2; exit}' "$recipe_dir/veshell-bin.spec")"
   release="$(awk -F': *' '/^Release:/{print $2; exit}' "$recipe_dir/veshell-bin.spec" | sed 's/%{.*}//')"
   version="${version}-${release}"
-elif [[ -f "$recipe_dir/veshell-bin.dsc" ]]; then
-  version="$(awk -F': *' '/^Version:/{print $2; exit}' "$recipe_dir/veshell-bin.dsc")"
+else
+  dsc="$(find "$recipe_dir" -maxdepth 1 -name 'veshell-*.dsc' -print -quit)"
+  [[ -n "$dsc" ]] && version="$(awk -F': *' '/^Version:/{print $2; exit}' "$dsc")"
 fi
 
 if ((dry_run)); then

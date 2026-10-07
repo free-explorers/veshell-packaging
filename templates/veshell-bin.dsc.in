@@ -9,6 +9,7 @@ Standards-Version: 4.6.2
 Build-Depends:
  debhelper-compat (= 13),
  zstd,
+ libdisplay-info-dev,
  libgbm-dev,
  libglib2.0-dev,
  libglvnd-dev,
@@ -20,8 +21,8 @@ Build-Depends:
  libseat-dev,
  libudev-dev,
  libxkbcommon-dev
-DEBTRANSFORM-TAR: veshell-@RELEASE_ID@-x86_64.tar.zst
+DEBTRANSFORM-TAR: @PAYLOAD_ASSET@
 DEBTRANSFORM-RELEASE: 1
 Files:
- 00000000000000000000000000000000 0 veshell-@RELEASE_ID@-x86_64.tar.zst
+ 00000000000000000000000000000000 0 @PAYLOAD_ASSET@
  00000000000000000000000000000000 0 veshell-bin_@VERSION@.debian.tar.xz

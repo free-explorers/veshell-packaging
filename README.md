@@ -31,7 +31,7 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 │   ├── veshell.spec.in
 │   ├── veshell-bin.spec.in      # RPM veshell-bin (rendered at release time)
 │   ├── veshell-bin.changes.in
-│   ├── veshell-bin.dsc.in        # OBS binary DEB (rendered at release time)
+│   ├── veshell-bin.dsc.in        # OBS binary DEB, one .dsc per repository (rendered at release time)
 │   ├── debian.control.in
 │   ├── debian.rules.in
 │   ├── debian.changelog.in
@@ -41,7 +41,7 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 ├── scripts/
 │   ├── build-veshell.sh         # the shared hermetic build (copied into each recipe)
 │   ├── fetch-inputs.sh          # download + verify + lay out every pinned input
-│   ├── build-prebuilt.sh        # build the prebuilt payload tarball
+│   ├── build-prebuilt.sh        # build a prebuilt payload tarball (PAYLOAD_SUFFIX picks the variant)
 │   ├── generate-inputs.sh       # regenerates the generated inputs + verifies pins
 │   ├── render-recipes.py        # release.json + templates -> source recipes
 │   ├── gen-bin-recipes.py       # prebuilt hash -> AUR/RPM/DEB veshell-bin recipes
@@ -54,7 +54,9 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 │   └── import-release.sh
 ├── ci/
 │   ├── arch-deps.txt            # Arch build dependencies for the CI container
-│   └── prebuilt-in-container.sh # release build entry point for the container
+│   ├── prebuilt-in-container.sh # common payload build entry point (Arch)
+│   ├── debian-deps.txt          # Debian build dependencies for the CI container
+│   └── prebuilt-in-container-debian.sh # Debian payload build entry point (Debian 13)
 ├── engine/README.md             # the engine repository and the switch to it
 ├── arch/
 │   ├── PKGBUILD                 # Arch / Manjaro source package (generated)
@@ -209,10 +211,14 @@ carries the Debian runtime dependency names and `Provides`/`Conflicts: veshell`.
 OBS source files do not carry a file mode, so `build.script` restores the
 executable bit on `debian/rules` before `dpkg-buildpackage` runs.
 
-Because Debian 13 and Ubuntu 26.04 ship different `libdisplay-info` sonames
-(`.so.2` vs `.so.3`), the prebuilt payload bundles `libdisplay-info.so.3` in
-`usr/lib/veshell` (`scripts/build-prebuilt.sh`). The compositor already carries
-`RUNPATH=/usr/lib/veshell`, so the package no longer depends on a distro copy.
+Debian 13 ships `libdisplay-info.so.2` while Arch, Fedora, openSUSE and Ubuntu
+26.04 ship `.so.3`, so a single payload cannot link both. The pipeline builds a
+**second payload** in a Debian 13 container
+(`ci/prebuilt-in-container-debian.sh`), published as
+`veshell-<release>-debian13-x86_64.tar.zst`. OBS selects a payload per
+repository through per-repository recipes (`veshell-<repository>.dsc`):
+`Debian_*` repositories use the Debian payload, the rest use the common
+Arch-built payload. No distribution library is bundled.
 
 ### Installing from the OBS repositories
 
