@@ -78,22 +78,23 @@ add_repo() {
 }
 
 available_version() {
+  # No awk: slim container images (openSUSE's in particular) do not ship it.
   case "$channel" in
     deb:*)
       apt-get update -qq >/dev/null 2>&1 || true
-      apt-cache policy veshell-bin 2>/dev/null | awk '/Candidate:/{print $2; exit}'
+      apt-cache policy veshell-bin 2>/dev/null | sed -n 's/^ *Candidate: *//p' | head -1
       ;;
     zypper)
       zypper --non-interactive refresh >/dev/null 2>&1 || true
-      zypper --non-interactive info veshell-bin 2>/dev/null | awk -F': *' '/^Version:/{print $2; exit}'
+      zypper --non-interactive info veshell-bin 2>/dev/null | sed -n 's/^Version *: *//p' | head -1
       ;;
     copr)
       dnf -q makecache >/dev/null 2>&1 || true
-      dnf -q info veshell-bin 2>/dev/null | awk -F': *' '/^Version/{print $2; exit}'
+      dnf -q info veshell-bin 2>/dev/null | sed -n 's/^Version *: *//p' | head -1
       ;;
     aur)
       curl -fsSL "https://aur.archlinux.org/rpc/v5/info?arg%5B%5D=veshell-bin" 2>/dev/null \
-        | python3 -c 'import sys,json; r=json.load(sys.stdin)["results"]; print(r[0]["Version"] if r else "")' 2>/dev/null || true
+        | grep -o '"Version":"[^"]*"' | head -1 | sed 's/.*:"//; s/"$//'
       ;;
   esac
 }
@@ -125,7 +126,7 @@ installed_version() {
   case "$channel" in
     deb:*)  dpkg-query -W -f='${Version}' veshell-bin ;;
     zypper|copr) rpm -q --qf '%{VERSION}' veshell-bin ;;
-    aur)    pacman -Q veshell-bin | awk '{print $2}' ;;
+    aur)    pacman -Q veshell-bin | sed -n 's/^veshell-bin //p' ;;
   esac
 }
 
