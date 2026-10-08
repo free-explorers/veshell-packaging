@@ -8,7 +8,7 @@
 # Environment:
 #   OSC_CONFIG     path to an oscrc holding the apiurl and credentials
 #   OBS_RPM_REPOS  repositories to add for the RPM build (default: Tumbleweed,
-#                  Slowroll and Leap 16.0)
+#                  Slowroll and 16.0 = Leap 16)
 #   OBS_DEB_REPOS  repositories to add for the DEB build (default below)
 #
 # Usage: obs-publish.sh RECIPE_DIR OBS_PROJECT OBS_PACKAGE [--format rpm|deb|all] [--dry-run]
@@ -87,10 +87,11 @@ shopt -u nullglob
 [[ ${#assets[@]} -gt 0 ]] || { printf 'error: no veshell-*.tar.zst in %s\n' "$recipe_dir" >&2; exit 1; }
 
 # Repositories that must exist on the project for the requested format(s).
-# Tumbleweed and Slowroll share one payload set; Leap 16.0 needs the payload
-# built against libdisplay-info.so.2 (see the release workflow's family map).
+# Tumbleweed and Slowroll share one payload set. Leap 16.0's build repository
+# is named "16.0" and needs the payload built against libdisplay-info.so.2 (see
+# the release workflow's family map).
 # shellcheck disable=SC2206  # intentional word splitting
-repos=(${OBS_RPM_REPOS:-openSUSE_Tumbleweed openSUSE_Slowroll openSUSE_Leap_16.0})
+repos=(${OBS_RPM_REPOS:-openSUSE_Tumbleweed openSUSE_Slowroll 16.0})
 if [[ "$format" == deb || "$format" == all ]]; then
   # shellcheck disable=SC2206  # intentional word splitting
   repos+=(${OBS_DEB_REPOS:-xUbuntu_26.04 Debian_13})

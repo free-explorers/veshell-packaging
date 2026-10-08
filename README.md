@@ -190,12 +190,12 @@ succeeds before the channels are set up:
 | --- | --- | --- |
 | aur | `AUR_SSH_PRIVATE_KEY` | — |
 | copr | `COPR_CONFIG` | `COPR_PROJECT` (required, e.g. `@<fas-group>/veshell`) |
-| obs | `OSC_CONFIG` | `OBS_PROJECT` (required, e.g. `home:<user>`), `OBS_PACKAGE` (`veshell`), `OBS_RPM_REPOS` (`openSUSE_Tumbleweed openSUSE_Slowroll openSUSE_Leap_16.0`), `OBS_DEB_REPOS` (`xUbuntu_26.04 Debian_13`) |
+| obs | `OSC_CONFIG` | `OBS_PROJECT` (required, e.g. `home:<user>`), `OBS_PACKAGE` (`veshell`), `OBS_RPM_REPOS` (`openSUSE_Tumbleweed openSUSE_Slowroll 16.0`), `OBS_DEB_REPOS` (`xUbuntu_26.04 Debian_13`) |
 | nix | — (GitHub OIDC only) | `VESHELL_REPO` (`free-explorers/veshell`) |
 
 Both AUR packages, the COPR project, and the OBS project/package must exist
 first; create them once in the respective web UI. The OBS job adds the
-`openSUSE_Tumbleweed`, `openSUSE_Slowroll`, `openSUSE_Leap_16.0`,
+`openSUSE_Tumbleweed`, `openSUSE_Slowroll`, `16.0` (Leap 16),
 `xUbuntu_26.04` and `Debian_13` build repositories to
 the project if they are missing, resolving each base project from the OBS
 instance's distribution list.
@@ -249,7 +249,8 @@ is purely about the linked sonames.)
 
 OBS selects a recipe per repository — `veshell-<repository>.dsc` for DEB and
 `veshell-<repository>.spec` for RPM — so `Debian_13` and `openSUSE_Leap_16.0`
-point at the `.so.2` payload while the rest point at the common one. Prefer that
+point at the `.so.2` payload while the rest point at the common one. (Leap's
+OBS build repository is named `16.0`.) Prefer that
 mechanism over a new payload whenever a target joins an existing family. No
 distribution library is bundled.
 
@@ -261,7 +262,7 @@ Replace `<project>` with `OBS_PROJECT`, using `:` -> `:/` in the download URL
 openSUSE:
 
 ```sh
-# Tumbleweed, or openSUSE_Slowroll / openSUSE_Leap_16.0
+# Tumbleweed, or openSUSE_Slowroll / 16.0 (Leap 16)
 sudo zypper addrepo -f \
   https://download.opensuse.org/repositories/<project>/openSUSE_Tumbleweed/ veshell
 sudo zypper --gpg-auto-import-keys refresh

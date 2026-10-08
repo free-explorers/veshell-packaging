@@ -53,9 +53,10 @@ jobs:
           # Tumbleweed's glibc (2.44) and its exact soname set, so this leg
           # covers it.
           # Leap 16.0 is the libdisplay-info.so.2 family, like Debian 13.
+          # OBS names its build repository "16.0".
           - name: openSUSE Leap 16.0
             image: opensuse/leap:16.0
-            channel: zypper:openSUSE_Leap_16.0
+            channel: zypper:16.0
           - name: Fedora 44
             image: fedora:44
             channel: copr

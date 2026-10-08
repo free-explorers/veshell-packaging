@@ -353,17 +353,19 @@ jobs:
           release_id="${{ needs.validate.outputs.release_id }}"
           common_payload="veshell-${release_id}-x86_64.tar.zst"
           common_sha="${{ needs.prebuilt.outputs.prebuilt_sha }}"
-          # Library-family payloads. Debian 13 and openSUSE Leap 16.0 both ship
+          # Library-family payloads. Debian 13 and openSUSE Leap 16.0 (repo "16.0")
+          # both ship
           # libdisplay-info.so.2, so they share the payload built on Debian 13;
           # everything else links libdisplay-info.so.3 and uses the common one.
           so2_payload="veshell-${release_id}-debian13-x86_64.tar.zst"
           so2_sha="${{ needs.prebuilt-debian.outputs.prebuilt_debian_sha }}"
 
           # One spec per RPM repository: OBS selects <package>-<repository>.spec.
-          for repo in ${OBS_RPM_REPOS:-openSUSE_Tumbleweed openSUSE_Slowroll openSUSE_Leap_16.0}; do
+          for repo in ${OBS_RPM_REPOS:-openSUSE_Tumbleweed openSUSE_Slowroll 16.0}; do
             case "$repo" in
-              *Leap*) payload="$so2_payload"; sha="$so2_sha" ;;
-              *)      payload="$common_payload"; sha="$common_sha" ;;
+              # OBS names the Leap 16.0 repository "16.0" (the .so.2 family).
+              16.0|15.*) payload="$so2_payload"; sha="$so2_sha" ;;
+              *)         payload="$common_payload"; sha="$common_sha" ;;
             esac
             python3 scripts/gen-bin-recipes.py --format rpm --repo "$repo" \
               --obs-package "$OBS_PACKAGE" \
