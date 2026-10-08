@@ -11,7 +11,8 @@
 # bringing them is attributable to the package).
 #
 # Usage: smoke-install.sh <channel> <expected-version-prefix>
-#   channel = deb:<obs-repo> | zypper | copr | aur   e.g. deb:Debian_13
+#   channel = deb:<obs-repo> | zypper[:<obs-repo>] | copr | aur
+#   e.g. deb:Debian_13, zypper:openSUSE_Leap_16.0
 set -uo pipefail
 
 channel="${1:?usage: smoke-install.sh <deb:REPO|zypper|copr|aur> <expected-version>}"
@@ -20,6 +21,12 @@ expected="${2:?expected version prefix, e.g. 0.1.0}"
 OBS_ROOT="https://download.opensuse.org/repositories/home:/PapyElGringo"
 wait_attempts="${SMOKE_WAIT_ATTEMPTS:-20}"
 wait_sleep="${SMOKE_WAIT_SLEEP:-30}"
+
+# zypper:<obs-repo> selects the openSUSE build repository (default Tumbleweed).
+zyp_repo=""
+case "$channel" in
+  zypper|zypper:*) zyp_repo="${channel#zypper}"; zyp_repo="${zyp_repo#:}"; zyp_repo="${zyp_repo:-openSUSE_Tumbleweed}" ;;
+esac
 
 dlopen_libs=(libEGL.so.1 libwayland-server.so.0 libxkbcommon-x11.so.0)
 fail=0
@@ -58,9 +65,12 @@ add_repo() {
       echo "deb [signed-by=/usr/share/keyrings/veshell.gpg] $OBS_ROOT/${repo}/ ./" \
         > /etc/apt/sources.list.d/veshell.list
       ;;
-    zypper)
+    zypper|zypper:*)
       zypper --non-interactive rr veshell >/dev/null 2>&1 || true
-      zypper --non-interactive ar -f "$OBS_ROOT/openSUSE_Tumbleweed/" veshell
+      zypper --non-interactive ar -f "$OBS_ROOT/${zyp_repo}/" veshell
+      # The repository key must be trusted before any metadata is fetched,
+      # otherwise the refresh fails and the version probe sees nothing.
+      zypper --non-interactive --gpg-auto-import-keys refresh veshell
       ;;
     copr)
       dnf install -y dnf-plugins-core >/dev/null
@@ -84,8 +94,8 @@ available_version() {
       apt-get update -qq >/dev/null 2>&1 || true
       apt-cache policy veshell-bin 2>/dev/null | sed -n 's/^ *Candidate: *//p' | head -1
       ;;
-    zypper)
-      zypper --non-interactive refresh >/dev/null 2>&1 || true
+    zypper|zypper:*)
+      zypper --non-interactive --gpg-auto-import-keys refresh veshell >/dev/null 2>&1 || true
       zypper --non-interactive info veshell-bin 2>/dev/null | sed -n 's/^Version *: *//p' | head -1
       ;;
     copr)
@@ -125,7 +135,7 @@ install_package() {
 installed_version() {
   case "$channel" in
     deb:*)  dpkg-query -W -f='${Version}' veshell-bin ;;
-    zypper|copr) rpm -q --qf '%{VERSION}' veshell-bin ;;
+    zypper|zypper:*|copr) rpm -q --qf '%{VERSION}' veshell-bin ;;
     aur)    pacman -Q veshell-bin | sed -n 's/^veshell-bin //p' ;;
   esac
 }

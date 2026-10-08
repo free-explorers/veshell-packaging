@@ -7,12 +7,14 @@
 #
 # Environment:
 #   OSC_CONFIG     path to an oscrc holding the apiurl and credentials
+#   OBS_RPM_REPOS  repositories to add for the RPM build (default: Tumbleweed,
+#                  Slowroll and Leap 16.0)
 #   OBS_DEB_REPOS  repositories to add for the DEB build (default below)
 #
 # Usage: obs-publish.sh RECIPE_DIR OBS_PROJECT OBS_PACKAGE [--format rpm|deb|all] [--dry-run]
 #   RECIPE_DIR must contain the rendered recipe for the requested format(s)
 #   plus the prebuilt tarball (veshell-*.tar.zst):
-#     rpm  veshell-bin.spec, veshell-bin.changes
+#     rpm  veshell-<repository>.spec (one per repository), veshell-bin.changes
 #     deb  veshell-<repository>.dsc (one per repository), debian.control,
 #          debian.rules, debian.changelog
 #   plus one or more prebuilt tarballs (veshell-*.tar.zst).
@@ -50,10 +52,16 @@ osc() { command osc --config "$OSC_CONFIG" "$@"; }
 # Collect the recipe files to upload for the requested format(s).
 upload=()
 if [[ "$format" == rpm || "$format" == all ]]; then
-  for f in veshell-bin.spec veshell-bin.changes; do
-    [[ -f "$recipe_dir/$f" ]] || { printf 'error: missing %s/%s\n' "$recipe_dir" "$f" >&2; exit 1; }
-    upload+=("$f")
-  done
+  # One spec per RPM repository: OBS selects <package>-<repository>.spec, which
+  # is how openSUSE Leap 16.0 gets the payload built against libdisplay-info.so.2
+  # while Tumbleweed and Slowroll get the common one.
+  shopt -s nullglob
+  specs=("$recipe_dir"/"$package"-*.spec)
+  shopt -u nullglob
+  [[ ${#specs[@]} -gt 0 ]] || { printf 'error: no %s-*.spec in %s\n' "$package" "$recipe_dir" >&2; exit 1; }
+  for spec in "${specs[@]}"; do upload+=("$(basename "$spec")"); done
+  [[ -f "$recipe_dir/veshell-bin.changes" ]] || { printf 'error: missing %s/veshell-bin.changes\n' "$recipe_dir" >&2; exit 1; }
+  upload+=("veshell-bin.changes")
 fi
 if [[ "$format" == deb || "$format" == all ]]; then
   for f in debian.control debian.rules debian.changelog; do
@@ -66,9 +74,9 @@ if [[ "$format" == deb || "$format" == all ]]; then
   # One .dsc per OBS repository: OBS selects <package>-<repository>.dsc, which is
   # how the Debian repository gets the payload built against its libraries.
   shopt -s nullglob
-  dscs=("$recipe_dir"/veshell-*.dsc)
+  dscs=("$recipe_dir"/"$package"-*.dsc)
   shopt -u nullglob
-  [[ ${#dscs[@]} -gt 0 ]] || { printf 'error: no veshell-*.dsc in %s\n' "$recipe_dir" >&2; exit 1; }
+  [[ ${#dscs[@]} -gt 0 ]] || { printf 'error: no %s-*.dsc in %s\n' "$package" "$recipe_dir" >&2; exit 1; }
   for dsc in "${dscs[@]}"; do upload+=("$(basename "$dsc")"); done
 fi
 
@@ -79,7 +87,10 @@ shopt -u nullglob
 [[ ${#assets[@]} -gt 0 ]] || { printf 'error: no veshell-*.tar.zst in %s\n' "$recipe_dir" >&2; exit 1; }
 
 # Repositories that must exist on the project for the requested format(s).
-repos=(openSUSE_Tumbleweed)
+# Tumbleweed and Slowroll share one payload set; Leap 16.0 needs the payload
+# built against libdisplay-info.so.2 (see the release workflow's family map).
+# shellcheck disable=SC2206  # intentional word splitting
+repos=(${OBS_RPM_REPOS:-openSUSE_Tumbleweed openSUSE_Slowroll openSUSE_Leap_16.0})
 if [[ "$format" == deb || "$format" == all ]]; then
   # shellcheck disable=SC2206  # intentional word splitting
   repos+=(${OBS_DEB_REPOS:-xUbuntu_26.04 Debian_13})
@@ -157,12 +168,13 @@ done
 ( cd "$pkg" && osc addremove )
 
 version=""
-if [[ -f "$recipe_dir/veshell-bin.spec" ]]; then
-  version="$(awk -F': *' '/^Version:/{print $2; exit}' "$recipe_dir/veshell-bin.spec")"
-  release="$(awk -F': *' '/^Release:/{print $2; exit}' "$recipe_dir/veshell-bin.spec" | sed 's/%{.*}//')"
+spec="$(find "$recipe_dir" -maxdepth 1 -name "$package-*.spec" -print -quit)"
+if [[ -n "$spec" ]]; then
+  version="$(sed -n 's/^Version:[[:space:]]*//p' "$spec" | head -1)"
+  release="$(sed -n 's/^Release:[[:space:]]*//p' "$spec" | head -1 | sed 's/%{.*}//')"
   version="${version}-${release}"
 else
-  dsc="$(find "$recipe_dir" -maxdepth 1 -name 'veshell-*.dsc' -print -quit)"
+  dsc="$(find "$recipe_dir" -maxdepth 1 -name "$package-*.dsc" -print -quit)"
   [[ -n "$dsc" ]] && version="$(awk -F': *' '/^Version:/{print $2; exit}' "$dsc")"
 fi
 

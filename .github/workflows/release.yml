@@ -338,6 +338,7 @@ jobs:
           OSC_CONFIG_CONTENT: ${{ secrets.OSC_CONFIG }}
           OBS_PROJECT: ${{ vars.OBS_PROJECT }}
           OBS_PACKAGE: ${{ vars.OBS_PACKAGE || 'veshell' }}
+          OBS_RPM_REPOS: ${{ vars.OBS_RPM_REPOS }}
           OBS_DEB_REPOS: ${{ vars.OBS_DEB_REPOS }}
         run: |
           set -euo pipefail
@@ -351,27 +352,37 @@ jobs:
           rm -rf /tmp/obs
           release_id="${{ needs.validate.outputs.release_id }}"
           common_payload="veshell-${release_id}-x86_64.tar.zst"
-          debian_payload="veshell-${release_id}-debian13-x86_64.tar.zst"
+          common_sha="${{ needs.prebuilt.outputs.prebuilt_sha }}"
+          # Library-family payloads. Debian 13 and openSUSE Leap 16.0 both ship
+          # libdisplay-info.so.2, so they share the payload built on Debian 13;
+          # everything else links libdisplay-info.so.3 and uses the common one.
+          so2_payload="veshell-${release_id}-debian13-x86_64.tar.zst"
+          so2_sha="${{ needs.prebuilt-debian.outputs.prebuilt_debian_sha }}"
 
-          python3 scripts/gen-bin-recipes.py --format rpm \
-            --prebuilt-sha "${{ needs.prebuilt.outputs.prebuilt_sha }}" \
-            --tag "$RELEASE_TAG" --out /tmp/obs
+          # One spec per RPM repository: OBS selects <package>-<repository>.spec.
+          for repo in ${OBS_RPM_REPOS:-openSUSE_Tumbleweed openSUSE_Slowroll openSUSE_Leap_16.0}; do
+            case "$repo" in
+              *Leap*) payload="$so2_payload"; sha="$so2_sha" ;;
+              *)      payload="$common_payload"; sha="$common_sha" ;;
+            esac
+            python3 scripts/gen-bin-recipes.py --format rpm --repo "$repo" \
+              --obs-package "$OBS_PACKAGE" \
+              --payload-asset "$payload" --payload-sha "$sha" \
+              --prebuilt-sha "$common_sha" --tag "$RELEASE_TAG" --out /tmp/obs
+          done
 
-          # One .dsc per DEB repository. Repositories named Debian_* build
-          # against Debian's libraries and use the Debian payload; the rest use
-          # the common (Arch-built) payload.
+          # One .dsc per DEB repository.
           for repo in ${OBS_DEB_REPOS:-xUbuntu_26.04 Debian_13}; do
             case "$repo" in
-              Debian_*) payload="$debian_payload" ;;
-              *) payload="$common_payload" ;;
+              Debian_*) payload="$so2_payload" ;;
+              *)        payload="$common_payload" ;;
             esac
             python3 scripts/gen-bin-recipes.py --format deb --repo "$repo" \
               --obs-package "$OBS_PACKAGE" --payload-asset "$payload" \
-              --prebuilt-sha "${{ needs.prebuilt.outputs.prebuilt_sha }}" \
-              --tag "$RELEASE_TAG" --out /tmp/obs
+              --prebuilt-sha "$common_sha" --tag "$RELEASE_TAG" --out /tmp/obs
           done
 
-          for asset in "$common_payload" "$debian_payload"; do
+          for asset in "$common_payload" "$so2_payload"; do
             curl -fsSL -o "/tmp/obs/$asset" \
               "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/$asset"
           done

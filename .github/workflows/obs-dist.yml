@@ -1,0 +1,43 @@
+name: OBS distributions (temporary)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  list:
+    runs-on: ubuntu-24.04
+    container: opensuse/tumbleweed:latest
+    timeout-minutes: 15
+    steps:
+      - name: Install tooling
+        shell: bash
+        run: zypper --non-interactive install osc curl findutils git
+
+      - name: Dump offered distributions
+        shell: bash
+        env:
+          OSC_CONFIG_CONTENT: ${{ secrets.OSC_CONFIG }}
+        run: |
+          set -uo pipefail
+          install -d -m700 "$HOME/.config/osc"
+          printf '%s\n' "$OSC_CONFIG_CONTENT" > "$HOME/.config/osc/oscrc"
+          chmod 600 "$HOME/.config/osc/oscrc"
+          osc api /distributions > /tmp/dist.xml
+          echo "=== openSUSE / Leap / Slowroll entries ==="
+          python3 - <<'PY'
+import xml.etree.ElementTree as ET
+root = ET.parse('/tmp/dist.xml').getroot()
+rows = []
+for d in root:
+    rows.append((d.get('vendor'), d.get('version'), d.findtext('reponame'),
+                 d.findtext('project'), d.findtext('repository')))
+print(f"total distributions: {len(rows)}")
+for v, ver, rn, p, r in rows:
+    if v and ('SUSE' in v.upper() or 'OPEN' in v.upper() or 'SLE' in v.upper()):
+        print(f"  vendor={v:10} version={ver:12} reponame={rn:28} base={p}/{r}")
+print()
+print("=== anything with Leap/Slowroll in the name ===")
+for v, ver, rn, p, r in rows:
+    if rn and ('eap' in rn or 'lowroll' in rn):
+        print("  ", rn)
+PY

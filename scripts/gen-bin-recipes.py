@@ -31,13 +31,13 @@ PREBUILT_REPO = "https://github.com/free-explorers/veshell-packaging"
 FORMATS = {
     "aur": [("PKGBUILD-bin.in", "PKGBUILD")],
     "rpm": [
-        ("veshell-bin.spec.in", "veshell-bin.spec"),
+        ("veshell-bin.spec.in", "{obs_package}-{repo}.spec"),
         ("veshell-bin.changes.in", "veshell-bin.changes"),
     ],
     # OBS's debtransform does not skip comment lines in a .dsc, so
     # veshell-bin.dsc.in must stay comment-free (and colon-free).
     "deb": [
-        ("veshell-bin.dsc.in", "veshell-{repo}.dsc"),
+        ("veshell-bin.dsc.in", "{obs_package}-{repo}.dsc"),
         ("debian.control.in", "debian.control"),
         ("debian.rules.in", "debian.rules"),
         ("debian.changelog.in", "debian.changelog"),
@@ -74,6 +74,10 @@ def main() -> int:
         "--payload-asset",
         help="payload asset for this recipe (default: the common veshell-<release>-x86_64.tar.zst)",
     )
+    parser.add_argument(
+        "--payload-sha",
+        help="sha256 of --payload-asset (default: --prebuilt-sha)",
+    )
     parser.add_argument("--out", required=True, type=Path, help="output directory")
     args = parser.parse_args()
 
@@ -86,17 +90,20 @@ def main() -> int:
     tag = args.tag or f"v{release_id}"
     asset = f"veshell-{release_id}-x86_64.tar.zst"
 
-    tokens["PREBUILT_URL"] = f"{PREBUILT_REPO}/releases/download/{tag}/{asset}"
-    tokens["PREBUILT_SHA256"] = args.prebuilt_sha
+    payload_asset = args.payload_asset or asset
+    tokens["PAYLOAD_ASSET"] = payload_asset
+    tokens["PREBUILT_URL"] = f"{PREBUILT_REPO}/releases/download/{tag}/{payload_asset}"
+    tokens["PREBUILT_SHA256"] = args.payload_sha or args.prebuilt_sha
     tokens["TAG"] = tag
-    tokens["PAYLOAD_ASSET"] = args.payload_asset or asset
 
     if args.format == "deb" and not args.repo:
         parser.error("--format deb requires --repo")
 
     args.out.mkdir(parents=True, exist_ok=True)
     for template_name, output_pattern in FORMATS[args.format]:
-        output_name = output_pattern.format(repo=args.repo, obs_package=args.obs_package)
+        output_name = output_pattern.format(
+            repo=args.repo or "bin", obs_package=args.obs_package
+        )
         template = ROOT / "templates" / template_name
         if not template.is_file():
             renderer.fail(f"missing template: {template}")

@@ -163,7 +163,8 @@ unverified.
 `.github/workflows/install-smoke.yml` is the counterpart to the build pipeline.
 On the same release event (or dispatched manually with a tag) it installs the
 published `veshell-bin` from each channel in a throwaway container — Debian 13,
-Ubuntu 26.04, openSUSE Tumbleweed, Fedora 44 and Arch (AUR) — and asserts what a
+Ubuntu 26.04, openSUSE Tumbleweed, openSUSE Leap 16.0, Fedora 44 and Arch (AUR)
+— and asserts what a
 package manager cannot (`ci/smoke-install.sh`):
 
 - the libraries the compositor **`dlopen()`s** (`libEGL.so.1`,
@@ -189,12 +190,13 @@ succeeds before the channels are set up:
 | --- | --- | --- |
 | aur | `AUR_SSH_PRIVATE_KEY` | — |
 | copr | `COPR_CONFIG` | `COPR_PROJECT` (required, e.g. `@<fas-group>/veshell`) |
-| obs | `OSC_CONFIG` | `OBS_PROJECT` (required, e.g. `home:<user>`), `OBS_PACKAGE` (`veshell`), `OBS_DEB_REPOS` (`xUbuntu_26.04 Debian_13`) |
+| obs | `OSC_CONFIG` | `OBS_PROJECT` (required, e.g. `home:<user>`), `OBS_PACKAGE` (`veshell`), `OBS_RPM_REPOS` (`openSUSE_Tumbleweed openSUSE_Slowroll openSUSE_Leap_16.0`), `OBS_DEB_REPOS` (`xUbuntu_26.04 Debian_13`) |
 | nix | — (GitHub OIDC only) | `VESHELL_REPO` (`free-explorers/veshell`) |
 
 Both AUR packages, the COPR project, and the OBS project/package must exist
 first; create them once in the respective web UI. The OBS job adds the
-`openSUSE_Tumbleweed`, `xUbuntu_26.04` and `Debian_13` build repositories to
+`openSUSE_Tumbleweed`, `openSUSE_Slowroll`, `openSUSE_Leap_16.0`,
+`xUbuntu_26.04` and `Debian_13` build repositories to
 the project if they are missing, resolving each base project from the OBS
 instance's distribution list.
 
@@ -204,7 +206,7 @@ The channels are split by distribution so they never overlap:
 | --- | --- |
 | AUR (`veshell`, `veshell-bin`, `veshell-git`) | Arch / Manjaro |
 | COPR | **Fedora** |
-| OBS | openSUSE, Ubuntu 26.04, Debian 13 |
+| OBS | openSUSE Tumbleweed + Slowroll + Leap 16.0, Ubuntu 26.04, Debian 13 |
 | Nix | NixOS |
 
 The AUR, COPR and OBS channels ship the `veshell-bin` binary package built from
@@ -236,14 +238,20 @@ carries the Debian runtime dependency names and `Provides`/`Conflicts: veshell`.
 OBS source files do not carry a file mode, so `build.script` restores the
 executable bit on `debian/rules` before `dpkg-buildpackage` runs.
 
-Debian 13 ships `libdisplay-info.so.2` while Arch, Fedora, openSUSE and Ubuntu
-26.04 ship `.so.3`, so a single payload cannot link both. The pipeline builds a
-**second payload** in a Debian 13 container
+The payloads are chosen by **library family**, not by distribution. Debian 13 and
+openSUSE Leap 16.0 ship `libdisplay-info.so.2`; Arch, Fedora, openSUSE
+Tumbleweed/Slowroll and Ubuntu 26.04 ship `.so.3`. A single payload cannot link
+both, so the pipeline builds a second one in a Debian 13 container
 (`ci/prebuilt-in-container-debian.sh`), published as
-`veshell-<release>-debian13-x86_64.tar.zst`. OBS selects a payload per
-repository through per-repository recipes (`veshell-<repository>.dsc`):
-`Debian_*` repositories use the Debian payload, the rest use the common
-Arch-built payload. No distribution library is bundled.
+`veshell-<release>-debian13-x86_64.tar.zst`. Every other target uses the common
+Arch-built payload. (The payloads have the same glibc floor, 2.39, so the split
+is purely about the linked sonames.)
+
+OBS selects a recipe per repository — `veshell-<repository>.dsc` for DEB and
+`veshell-<repository>.spec` for RPM — so `Debian_13` and `openSUSE_Leap_16.0`
+point at the `.so.2` payload while the rest point at the common one. Prefer that
+mechanism over a new payload whenever a target joins an existing family. No
+distribution library is bundled.
 
 ### Installing from the OBS repositories
 
@@ -253,6 +261,7 @@ Replace `<project>` with `OBS_PROJECT`, using `:` -> `:/` in the download URL
 openSUSE:
 
 ```sh
+# Tumbleweed, or openSUSE_Slowroll / openSUSE_Leap_16.0
 sudo zypper addrepo -f \
   https://download.opensuse.org/repositories/<project>/openSUSE_Tumbleweed/ veshell
 sudo zypper --gpg-auto-import-keys refresh
