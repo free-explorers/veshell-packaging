@@ -1,0 +1,76 @@
+name: Install smoke test
+
+# Installs the published veshell-bin from every channel in a throwaway container
+# and checks what a package manager cannot: that the libraries the compositor
+# dlopen()s actually resolve, that the payload layout is intact, and that every
+# shipped ELF links.
+#
+# This deliberately does not start the compositor. Containers have no /dev/dri,
+# and installing a display server to fake one would itself pull several of the
+# very libraries under test, hiding exactly the failure this job guards against.
+# The runtime (DRM backend) smoke test lives in the VM harness instead.
+#
+# The job waits, bounded, for the release's own build to appear on each channel
+# before installing, and asserts the installed version matches release.json, so
+# it can never quietly pass against a previous release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to install from (for example v0.1.0)
+        required: true
+        type: string
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  smoke:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Debian 13
+            image: debian:13
+            channel: deb:Debian_13
+          - name: Ubuntu 26.04
+            image: ubuntu:26.04
+            channel: deb:xUbuntu_26.04
+          - name: openSUSE Tumbleweed
+            image: opensuse/tumbleweed:latest
+            channel: zypper
+          - name: Fedora 44
+            image: fedora:44
+            channel: copr
+          - name: Arch
+            image: archlinux:base-devel
+            channel: aur
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Install and check in ${{ matrix.name }}
+        shell: bash
+        env:
+          CHANNEL: ${{ matrix.channel }}
+        run: |
+          set -euo pipefail
+          expected="$(python3 -c 'import json; print(json.load(open("release.json"))["version"])')"
+          echo "expecting version prefix: $expected"
+          docker run --rm \
+            -v "$PWD:/work" -w /work \
+            -e SMOKE_WAIT_ATTEMPTS=20 -e SMOKE_WAIT_SLEEP=30 \
+            "${{ matrix.image }}" \
+            bash ci/smoke-install.sh "$CHANNEL" "$expected"

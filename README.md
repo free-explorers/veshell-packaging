@@ -24,7 +24,7 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 .
 ├── release.json                 # release manifest, single source of truth
 ├── release.schema.json          # JSON Schema for the manifest
-├── .github/workflows/           # release.yml (distro channels) and nix-package-release.yml (Nix)
+├── .github/workflows/           # release.yml, install-smoke.yml, nix-package-release.yml
 ├── templates/                   # recipe templates rendered from the manifest
 │   ├── PKGBUILD.in
 │   ├── PKGBUILD-bin.in          # AUR veshell-bin (rendered at release time)
@@ -56,7 +56,8 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 │   ├── arch-deps.txt            # Arch build dependencies for the CI container
 │   ├── prebuilt-in-container.sh # common payload build entry point (Arch)
 │   ├── debian-deps.txt          # Debian build dependencies for the CI container
-│   └── prebuilt-in-container-debian.sh # Debian payload build entry point (Debian 13)
+│   ├── prebuilt-in-container-debian.sh # Debian payload build entry point (Debian 13)
+│   └── smoke-install.sh         # post-release install check, run per channel in a container
 ├── engine/README.md             # the engine repository and the switch to it
 ├── arch/
 │   ├── PKGBUILD                 # Arch / Manjaro source package (generated)
@@ -156,6 +157,30 @@ hand is a mistake: change `release.json` or the templates and re-render.
 `scripts/fetch-inputs.sh` downloads and checksum-verifies the pinned SDK/engine
 artifacts and the two generated inputs before the build, so nothing is fetched
 unverified.
+
+### Install smoke test
+
+`.github/workflows/install-smoke.yml` is the counterpart to the build pipeline.
+On the same release event (or dispatched manually with a tag) it installs the
+published `veshell-bin` from each channel in a throwaway container — Debian 13,
+Ubuntu 26.04, openSUSE Tumbleweed, Fedora 44 and Arch (AUR) — and asserts what a
+package manager cannot (`ci/smoke-install.sh`):
+
+- the libraries the compositor **`dlopen()`s** (`libEGL.so.1`,
+  `libwayland-server.so.0`, `libxkbcommon-x11.so.0`) resolve. They are absent
+  from `DT_NEEDED`, so `dh_shlibdeps`, RPM's auto-requires and `makepkg` cannot
+  discover them: a package that forgets to declare one installs perfectly and
+  then panics on first launch;
+- the payload layout (`/usr/bin/veshell*`, `libapp.so`, `libflutter_engine.so`,
+  assets, session desktop, portal, systemd user unit);
+- every shipped ELF links (`ldd`).
+
+It waits, bounded, for the release's own build to appear on each channel and
+asserts the installed version matches `release.json`, so it can never quietly
+pass against a previous release. It deliberately does **not** start the
+compositor: containers have no `/dev/dri`, and installing a display server to
+fake one would pull several of the very libraries under test. The runtime
+(DRM backend) smoke test is done in a VM instead.
 
 Every channel job is a no-op until its secret is configured, so a release still
 succeeds before the channels are set up:
