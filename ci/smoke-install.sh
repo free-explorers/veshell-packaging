@@ -116,7 +116,7 @@ install_package() {
       # a Recommends that a plain install would have pulled in anyway.
       apt-get install -y --no-install-recommends veshell-bin
       ;;
-    zypper)
+    zypper|zypper:*)
       zypper --non-interactive --gpg-auto-import-keys install -y veshell-bin
       ;;
     copr)
