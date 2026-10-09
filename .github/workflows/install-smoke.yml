@@ -21,18 +21,26 @@ on:
         description: Release tag to install from (for example v0.1.0)
         required: true
         type: string
-  release:
-    types: [published]
+  # Run once the Release pipeline has finished instead of racing it on the
+  # release event: nothing reaches a channel until the prebuilt payloads exist,
+  # and OBS rebuilds afterwards, so a run started at publish time always loses.
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
 
 permissions:
   contents: read
 
 env:
-  RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+  RELEASE_TAG: ${{ github.event.workflow_run.head_branch || inputs.tag }}
 
 jobs:
   smoke:
     name: ${{ matrix.name }}
+    if: >-
+      github.repository == 'free-explorers/veshell-packaging' &&
+      (github.event_name == 'workflow_dispatch' ||
+       startsWith(github.event.workflow_run.head_branch, 'v'))
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
@@ -65,9 +73,10 @@ jobs:
             channel: aur
 
     steps:
-      - name: Checkout
+      - name: Checkout the release tag
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          ref: ${{ github.event.workflow_run.head_branch || inputs.tag }}
           persist-credentials: false
 
       - name: Install and check in ${{ matrix.name }}
