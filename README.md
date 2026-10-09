@@ -158,10 +158,31 @@ hand is a mistake: change `release.json` or the templates and re-render.
 artifacts and the two generated inputs before the build, so nothing is fetched
 unverified.
 
+### GitHub releases
+
+Two release objects are published per version, for two different audiences:
+
+- **`free-explorers/veshell`** — the product release. It carries the user-facing
+  changelog, so watchers of the application repository are notified, and it tags
+  the exact commit the release was built from. It holds no assets.
+- **this repository** — the artifact release. It holds the prebuilt payloads,
+  their checksums and the attested Nix closures, and it is what the pipeline
+  above keys off.
+
+Do not mark either as a GitHub **pre-release** while `release.json` says
+`"channel": "beta"`. GitHub's pre-release flag only excludes a release from
+`releases/latest`; because beta is the shipping channel and there is no stable
+release for `latest` to point at, marking it pre-release leaves "Latest"
+pointing at an old alpha. The maturity signal lives in `channel` and the
+changelog title, not in that flag. Reserve the flag for builds that are not
+meant to be consumed, such as nightly or RC snapshots. `packaging-inputs-*`
+stays pre-release: it is an internal artifact, not a product release.
+
 ### Install smoke test
 
 `.github/workflows/install-smoke.yml` is the counterpart to the build pipeline.
-On the same release event (or dispatched manually with a tag) it installs the
+When the Release workflow finishes (or when dispatched manually with a tag) it
+installs the
 published `veshell-bin` from each channel in a throwaway container — Debian 13,
 Ubuntu 26.04, openSUSE Tumbleweed, openSUSE Leap 16.0, Fedora 44 and Arch (AUR)
 — and asserts what a
