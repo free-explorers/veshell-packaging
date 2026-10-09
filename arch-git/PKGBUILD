@@ -33,6 +33,12 @@ optdepends=(
 )
 provides=('veshell' 'wayland-compositor')
 conflicts=('veshell' 'veshell-bin')
+# makepkg's global `lto` option adds -flto to CFLAGS (it is enabled by default
+# in Arch's makepkg.conf). The libspa-sys build script compiles a C shim into a
+# static archive; LTO objects there are not resolved by rustc's final (non-LTO)
+# link, which fails with undefined `*_libspa_rs` symbols. Disable LTO here, as
+# the source recipe does.
+options=('!lto')
 source=('git+https://github.com/free-explorers/veshell.git')
 sha256sums=('SKIP')
 
