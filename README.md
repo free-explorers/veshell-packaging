@@ -144,10 +144,10 @@ hand is a mistake: change `release.json` or the templates and re-render.
    submits it to COPR.
 5. **obs** — commits the `veshell-bin` spec, changes and prebuilt payload to the
    Open Build Service.
-Nix closures are not built here. `free-explorers/flutter-engine-nix` caches the
-engine, and the `veshell` flake caches the package/SDK/shell; this pipeline only
-checks that the Nix pins in `release.json` still match the Veshell source
-(`render-recipes.py --check`, in **validate** above).
+Nix closures are not built here. `free-explorers/flutter-engine-nix` publishes
+the source-built engine to the `veshell` Cachix cache and the flake substitutes
+it; this pipeline only checks that the Nix pins in `release.json` still match the
+Veshell source (`render-recipes.py --check`, in **validate** above).
 
 `scripts/fetch-inputs.sh` downloads and checksum-verifies the pinned SDK/engine
 artifacts and the two generated inputs before the build, so nothing is fetched
@@ -229,9 +229,8 @@ the prebuilt payload (the same model as the AUR `veshell-bin`), because Flutter'
 ~1.9 GB of pinned inputs exceed the services' upload limits. A source package on
 those services needs a server-side `_service` or builder-side fetching, and is
 worth doing once we publish our own engine. The Nix channel is served by the
-flake, which substitutes from the `veshell` Cachix cache; the engine and
-application closures are pushed there by `flutter-engine-nix` and the `veshell`
-repository, not by this pipeline.
+flake, which substitutes the engine from the `veshell` Cachix cache (pushed by
+`flutter-engine-nix`) and builds the app locally in a few minutes.
 
 Fedora RPMs are built on COPR, not OBS: `dnf copr enable` is the idiomatic Fedora
 install path, and OBS gets no Fedora targets. The same `veshell-bin.spec` serves
