@@ -1,18 +1,10 @@
 name: Nix Package Release
 
-# Builds and publishes the attested Nix closure for the package, SDK and shell.
-# The same release event that runs release.yml (a v* tag) also runs this
-# workflow, so the Nix channel is published alongside the distro channels.
-#
-# The application source and its nix/ expressions are checked out from
-# free-explorers/veshell at the commit pinned in this repository's release.json;
-# the closure export/import helpers live in this repository, next to this
-# workflow. The engine is never built here: the separately attested release
-# published by free-explorers/flutter-engine-nix (tag nix-engine-<runtime-output-
-# hash>) is imported first, and engine bytes stay out of the application closure.
-#
-# The closure is published on the triggering release tag, so every asset of a
-# Veshell release lives in one place.
+# Builds the Veshell package, SDK and shell from the pinned source commit and
+# pushes the closures to the project Cachix cache. Consumers substitute them, so
+# this workflow never builds the engine: the engine and runtime closures are
+# pushed by free-explorers/flutter-engine-nix. No closure assets are published;
+# the cache is the distribution channel.
 
 on:
   release:
@@ -20,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing release tag to publish (for example v0.1.0-beta.1)
+        description: Existing release tag to publish (for example v0.1.1)
         required: true
         type: string
 
@@ -42,12 +34,6 @@ jobs:
        startsWith(github.event.release.tag_name, 'v'))
     runs-on: ubuntu-24.04
     timeout-minutes: 150
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-    env:
-      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout the packaging repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -67,13 +53,6 @@ jobs:
           fi
           commit="$(python3 -c 'import json; print(json.load(open("release.json"))["commit"])')"
           [[ $commit =~ ^[0-9a-f]{40}$ ]]
-          # The closure carries an attestation for the ref the workflow ran on.
-          # Require the tag ref so the published assets stay verifiable even when
-          # the workflow is dispatched manually (gh workflow run --ref <tag>).
-          [[ $GITHUB_REF == "refs/tags/$tag" ]] || {
-            printf 'error: run this workflow at tag %s (gh workflow run --ref %s)\n' "$tag" "$tag" >&2
-            exit 1
-          }
           printf 'veshell_commit=%s\n' "$commit" >> "$GITHUB_OUTPUT"
 
       - name: Check out the pinned Veshell source
@@ -85,9 +64,7 @@ jobs:
           set -euo pipefail
           git clone --quiet "https://github.com/${VESHELL_REPO}.git" .veshell
           git -C .veshell checkout --quiet "$VESHELL_COMMIT"
-          test -f .veshell/nix/release.nix
-          test -f "$GITHUB_WORKSPACE/nix/export-release.sh"
-          test -f "$GITHUB_WORKSPACE/nix/import-release.sh"
+          test -f .veshell/flake.nix
 
       - name: Verify the recipes and Nix pins match the manifest
         run: python3 scripts/render-recipes.py --check --veshell-src .veshell
@@ -104,7 +81,7 @@ jobs:
           available=$(df --output=avail -B1 / | tr -dc '0-9')
           (( available >= 30 * 1024 * 1024 * 1024 ))
 
-      - name: Install Nix without a paid cache
+      - name: Install Nix
         uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
         with:
           extra_nix_config: |
@@ -112,91 +89,34 @@ jobs:
             cores = 4
             experimental-features = nix-command flakes
 
-      - name: Make the Nix tools available to sudo
-        shell: bash
-        run: |
-          set -euo pipefail
-          # The closure import runs `sudo nix-store`, and sudo resets PATH to
-          # secure_path, which does not include the Nix profile.
-          sudo ln -sf "$(command -v nix-store)" /usr/local/bin/nix-store
-          sudo ln -sf "$(command -v nix)" /usr/local/bin/nix
-          sudo nix-store --version
+      - name: Use the project cache
+        uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: veshell
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
-      - name: Predict engine outputs without building
-        id: identity
+      - name: Require the engine closure in the cache
         working-directory: .veshell
         shell: bash
         run: |
           set -euo pipefail
-          raw=$(nix-instantiate --eval --strict --json nix/release.nix -A rawEngine.outPath | jq -r .)
-          runtime=$(nix-instantiate --eval --strict --json nix/release.nix -A runtime.outPath | jq -r .)
-          source=$(nix-instantiate --eval --strict --json nix/release.nix -A engineSource | jq -r .)
-          commit=$(nix-instantiate --eval --strict --json nix/release.nix -A engineSourceRevision | jq -r .)
-          revision=$(nix-instantiate --eval --strict --json nix/release.nix -A nixpkgsRevision | jq -r .)
-          [[ $(jq -r .repository nix/engine-repository.json) == free-explorers/flutter-engine-nix ]]
-          [[ $commit == "$(jq -r .revision nix/engine-repository.json)" && $commit =~ ^[0-9a-f]{40}$ ]]
-          hash=${runtime#/nix/store/}
+          engine=$(nix eval --raw .#engine.outPath)
+          hash=${engine#/nix/store/}
           hash=${hash%%-*}
-          [[ $hash =~ ^[0-9a-z]{32}$ ]]
-          echo "tag=nix-engine-$hash" >> "$GITHUB_OUTPUT"
-          {
-            echo "ENGINE_OUTPUT=$raw"
-            echo "RAW_ENGINE_OUTPUT=$raw"
-            echo "RUNTIME_OUTPUT=$runtime"
-            echo "ENGINE_SOURCE=$source"
-            echo "ENGINE_SOURCE_REVISION=$commit"
-            echo "NIXPKGS_REVISION=$revision"
-          } >> "$GITHUB_ENV"
+          if ! curl -fsS "https://veshell.cachix.org/$hash.narinfo" >/dev/null; then
+            echo "Engine $engine is not in the veshell cache. Run the engine release workflow first." >&2
+            exit 1
+          fi
 
-      - name: Require and import the separate attested engine release
-        working-directory: .veshell
-        env:
-          ENGINE_RELEASE_TAG: ${{ steps.identity.outputs.tag }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          release="$RUNNER_TEMP/release.json"
-          if ! gh api "repos/free-explorers/flutter-engine-nix/releases/tags/$ENGINE_RELEASE_TAG" > "$release" 2> "$RUNNER_TEMP/release-error"; then
-            cat "$RUNNER_TEMP/release-error" >&2
-            echo "Required engine release free-explorers/flutter-engine-nix/$ENGINE_RELEASE_TAG is unavailable. Wait for the standalone engine release; Veshell will not build the engine." >&2
-            exit 1
-          fi
-          jq -e --arg commit "$ENGINE_SOURCE_REVISION" '.target_commitish == $commit' "$release" || {
-            echo 'Required engine release does not target the pinned engine commit; refusing to build.' >&2
-            exit 1
-          }
-          engine_helper="$ENGINE_SOURCE/import-release.sh"
-          if [[ ! -f $engine_helper ]]; then
-            # Some Nix versions keep the fetched tree in the fetcher cache, so the
-            # store path is not directly readable. Fall back to a checkout of the
-            # same revision, which is pinned by this checkout.
-            echo "engine source $ENGINE_SOURCE is not readable; using a pinned checkout" >&2
-            engine_checkout="$RUNNER_TEMP/flutter-engine-nix"
-            rm -rf "$engine_checkout"
-            git clone --quiet https://github.com/free-explorers/flutter-engine-nix "$engine_checkout"
-            git -C "$engine_checkout" checkout --quiet "$ENGINE_SOURCE_REVISION"
-            engine_helper="$engine_checkout/import-release.sh"
-          fi
-          [[ -f $engine_helper ]]
-          if ! EXPECTED_ENGINE_OUTPUT="$RAW_ENGINE_OUTPUT" EXPECTED_RAW_ENGINE_OUTPUT="$RAW_ENGINE_OUTPUT" \
-            EXPECTED_RUNTIME_OUTPUT="$RUNTIME_OUTPUT" \
-            bash "$engine_helper" "$ENGINE_SOURCE_REVISION" "$ENGINE_RELEASE_TAG" \
-              engine refs/heads/main --trust-github-release; then
-            echo 'Required engine release could not be authenticated/imported. No engine build will be attempted.' >&2
-            exit 1
-          fi
-          nix-store --check-validity "$RAW_ENGINE_OUTPUT" "$RUNTIME_OUTPUT"
-          echo "Imported separate attested engine $ENGINE_RELEASE_TAG ($ENGINE_SOURCE_REVISION)." >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Build full pinned package, SDK and shell (60 minute bound)
+      - name: Build the package, SDK and shell (60 minute bound)
         working-directory: .veshell
         timeout-minutes: 60
         shell: bash
         run: |
           set -euo pipefail
           setsid timeout --signal=INT --kill-after=60s 60m \
-            nix-build nix/release.nix -A package -A sdk -A shell -A aot --no-out-link \
-              --verbose --max-jobs 1 --cores 4 &
+            nix build .#default .#sdk .#shell --print-out-paths --no-link \
+              --max-jobs 1 --cores 4 > "$RUNNER_TEMP/roots" &
           pid=$!
           trap 'kill -INT -- -"$pid" 2>/dev/null || true' EXIT INT TERM
           while kill -0 "$pid" 2>/dev/null; do
@@ -210,55 +130,17 @@ jobs:
           done
           wait "$pid"
           trap - EXIT INT TERM
-          # Verify that AOT tooling is paired with the very same source engine.
-          nix-instantiate --eval --strict --json nix/release.nix -A shell.flutterBuildFlags | \
-            jq -e --arg expected "--local-engine-src-path=$RAW_ENGINE_OUTPUT" \
-              'index($expected) != null and index("--local-engine=host_release") != null and index("--local-engine-host=host_release") != null'
-          "$RAW_ENGINE_OUTPUT/out/host_release/gen_snapshot" --version
-          nix-instantiate --eval --strict --json --expr \
-            'let r = import ./nix/release.nix; in [ r.package.outPath r.sdk.outPath r.shell.outPath ]' | \
-            jq -r '.[]' > "$RUNNER_TEMP/package-roots"
-          mapfile -t roots < "$RUNNER_TEMP/package-roots"
-          (( ${#roots[@]} == 3 ))
-          test -x "${roots[0]}/bin/veshell"
-          test -s "${roots[2]}/lib/libapp.so"
-          echo 'Flutter tests are not enabled by the current offline shell derivation; no graphical/runtime tests claimed.' >> "$GITHUB_STEP_SUMMARY"
+          cat "$RUNNER_TEMP/roots"
+          package=$(sed -n '1p' "$RUNNER_TEMP/roots")
+          test -x "$package/bin/veshell"
 
-      - name: Export the package, SDK and shell closure
-        id: package_export
+      - name: Push the package, SDK and shell to the cache
         working-directory: .veshell
-        env:
-          VESHELL_COMMIT: ${{ steps.manifest.outputs.veshell_commit }}
         shell: bash
         run: |
           set -euo pipefail
-          package_ref="refs/tags/$RELEASE_TAG"
-          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets \
-            --jq '.assets[].name' 2>/dev/null | grep -qx 'package-SHA256SUMS'; then
-            EXPECTED_ENGINE_OUTPUT="$RAW_ENGINE_OUTPUT" EXPECTED_RAW_ENGINE_OUTPUT="$RAW_ENGINE_OUTPUT" \
-              EXPECTED_RUNTIME_OUTPUT="$RUNTIME_OUTPUT" \
-              bash "$GITHUB_WORKSPACE/nix/import-release.sh" "$VESHELL_COMMIT" "$RELEASE_TAG" package "$package_ref" --trust-github-release
-            echo 'Package assets already verified; not overwriting them.'
-            exit 0
-          fi
-          mapfile -t roots < "$RUNNER_TEMP/package-roots"
-          bash "$GITHUB_WORKSPACE/nix/export-release.sh" package "$RUNNER_TEMP/package-release" "${roots[@]}"
-          echo 'prepared=true' >> "$GITHUB_OUTPUT"
-
-      - name: Attest the package checksum manifest
-        if: steps.package_export.outputs.prepared == 'true'
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a
-        with:
-          subject-path: ${{ runner.temp }}/package-release/package-SHA256SUMS
-
-      - name: Add the package closure to the release
-        if: steps.package_export.outputs.prepared == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          gh release upload "$RELEASE_TAG" "$RUNNER_TEMP/package-release/"* \
-            --repo "$GITHUB_REPOSITORY" --clobber
-          echo 'Attested package, SDK and shell closures uploaded. The engine and runtime closures are excluded and imported separately.' >> "$GITHUB_STEP_SUMMARY"
+          mapfile -t roots < "$RUNNER_TEMP/roots"
+          cachix push veshell "${roots[@]}"
 
       - name: Final resource sample
         if: always()
