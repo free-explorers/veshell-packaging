@@ -24,7 +24,7 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 .
 ├── release.json                 # release manifest, single source of truth
 ├── release.schema.json          # JSON Schema for the manifest
-├── .github/workflows/           # release.yml, install-smoke.yml, nix-package-release.yml
+├── .github/workflows/           # release.yml, install-smoke.yml
 ├── templates/                   # recipe templates rendered from the manifest
 │   ├── PKGBUILD.in
 │   ├── PKGBUILD-bin.in          # AUR veshell-bin (rendered at release time)
@@ -49,9 +49,6 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 │   ├── copr-publish.sh          # submit the binary SRPM to COPR
 │   ├── obs-publish.sh           # commit the binary package to OBS
 │   └── sync-helpers.sh          # copies build-veshell.sh into each recipe
-├── nix/                         # Nix closure export/import helpers (run in a Veshell checkout)
-│   ├── export-release.sh
-│   └── import-release.sh
 ├── ci/
 │   ├── arch-deps.txt            # Arch build dependencies for the CI container
 │   ├── prebuilt-in-container.sh # common payload build entry point (Arch)
@@ -147,12 +144,10 @@ hand is a mistake: change `release.json` or the templates and re-render.
    submits it to COPR.
 5. **obs** — commits the `veshell-bin` spec, changes and prebuilt payload to the
    Open Build Service.
-6. **nix** — the second workflow `.github/workflows/nix-package-release.yml` runs
-   on the same release event. It checks out the pinned Veshell source for the
-   `nix/` expressions, imports the separately published `flutter-engine-nix`
-   engine closure (it never builds the engine), builds the package/SDK/shell
-   closures, and uploads the attested `package-*` assets to the same release. The
-   Nix toolchain is not used by the distro recipes.
+Nix closures are not built here. `free-explorers/flutter-engine-nix` publishes
+the source-built engine to the `veshell` Cachix cache and the flake substitutes
+it; this pipeline only checks that the Nix pins in `release.json` still match the
+Veshell source (`render-recipes.py --check`, in **validate** above).
 
 `scripts/fetch-inputs.sh` downloads and checksum-verifies the pinned SDK/engine
 artifacts and the two generated inputs before the build, so nothing is fetched
@@ -165,9 +160,9 @@ Two release objects are published per version, for two different audiences:
 - **`free-explorers/veshell`** — the product release. It carries the user-facing
   changelog, so watchers of the application repository are notified, and it tags
   the exact commit the release was built from. It holds no assets.
-- **this repository** — the artifact release. It holds the prebuilt payloads,
-  their checksums and the attested Nix closures, and it is what the pipeline
-  above keys off.
+- **this repository** — the artifact release. It holds the prebuilt payloads and
+  their checksums, and it is what the pipeline above keys off. Nix closures are
+  not attached here; they live in the `veshell` Cachix cache.
 
 Do not mark either as a GitHub **pre-release** while `release.json` says
 `"channel": "beta"`. GitHub's pre-release flag only excludes a release from
@@ -212,7 +207,6 @@ succeeds before the channels are set up:
 | aur | `AUR_SSH_PRIVATE_KEY` | — |
 | copr | `COPR_CONFIG` | `COPR_PROJECT` (required, e.g. `@<fas-group>/veshell`) |
 | obs | `OSC_CONFIG` | `OBS_PROJECT` (required, e.g. `home:<user>`), `OBS_PACKAGE` (`veshell`), `OBS_RPM_REPOS` (`openSUSE_Tumbleweed openSUSE_Slowroll 16.0`), `OBS_DEB_REPOS` (`xUbuntu_26.04 Debian_13`) |
-| nix | — (GitHub OIDC only) | `VESHELL_REPO` (`free-explorers/veshell`) |
 
 Both AUR packages, the COPR project, and the OBS project/package must exist
 first; create them once in the respective web UI. The OBS job adds the
@@ -234,8 +228,9 @@ The AUR, COPR and OBS channels ship the `veshell-bin` binary package built from
 the prebuilt payload (the same model as the AUR `veshell-bin`), because Flutter's
 ~1.9 GB of pinned inputs exceed the services' upload limits. A source package on
 those services needs a server-side `_service` or builder-side fetching, and is
-worth doing once we publish our own engine. The Nix channel instead builds from
-source with Nix and publishes an attested closure.
+worth doing once we publish our own engine. The Nix channel is served by the
+flake, which substitutes the engine from the `veshell` Cachix cache (pushed by
+`flutter-engine-nix`) and builds the app locally in a few minutes.
 
 Fedora RPMs are built on COPR, not OBS: `dnf copr enable` is the idiomatic Fedora
 install path, and OBS gets no Fedora targets. The same `veshell-bin.spec` serves
