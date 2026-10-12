@@ -36,20 +36,13 @@ switching is only a matter of changing the owner/repo in the download URL.
 1. In `free-explorers/flutter-engine`, dispatch **Engine Release** with the
    pinned engine revision (mode `release`; run `debug` too for keyless dev
    builds). It publishes `linux-engine-sdk-<mode>-x86_64-<rev>`.
-2. Point `release.json` at it and re-render:
-
-   ```jsonc
-   "flutter": {
-     "engine": {
-       "url": "https://github.com/free-explorers/flutter-engine/releases/download/linux-engine-sdk-release-x86_64-<revision>/linux-engine-sdk-release-x86_64-<revision>.tar.gz",
-       "sha256": "<from the .sha256 asset>"
-     }
-   }
-   ```
+2. The engine URL and hash are app-owned: `nix/flutter-artifacts.json` in the
+   Veshell checkout holds them, the **Bump Flutter Version** workflow fills them
+   (the sha256 lands when the release above exists), and `prepare-release.py`
+   mirrors them into `release.json` and re-renders. To verify by hand:
 
    ```sh
-   scripts/render-recipes.py
-   scripts/render-recipes.py --check
+   VESHELL_SRC=/path/to/veshell python3 scripts/render-recipes.py --check --veshell-src "$VESHELL_SRC"
    ```
 
 3. For dev builds, set `VESHELL_ENGINE_REPO=free-explorers/flutter-engine` (see

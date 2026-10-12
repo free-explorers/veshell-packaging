@@ -5,7 +5,7 @@
 #
 #   DEST/flutter-sdk/        extracted official Flutter SDK
 #   DEST/artifacts/          the six engine artifact zips (canonical names)
-#   DEST/engine.tar.gz       meta-flutter embedder engine tarball
+#   DEST/engine.tar.gz       portable Flutter embedder engine tarball
 #   DEST/cargo-vendor/       extracted `cargo vendor` tree
 #   DEST/pubcache/           extracted Dart pub cache
 #
