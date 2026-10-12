@@ -3,8 +3,9 @@
 
 Run from the packaging repository root. It writes the per-release metadata
 (version, prerelease, channel, date, commit), re-syncs the Flutter and engine
-pins from the Veshell checkout, and re-renders the recipes from the result, so a
-release is driven from the app instead of hand-editing the manifest.
+pins from the Veshell checkout, records the generated-input checksums, points the
+inputs mirror at this release, and re-renders the recipes, so a release is driven
+from the app instead of hand-editing the manifest.
 
 The upstream Flutter artifact block (SDK and engine URLs and hashes) is *not*
 derived here: it changes only when the Flutter version changes, which is a
@@ -12,9 +13,13 @@ deliberate dependency upgrade. If the checkout pins a different Flutter version,
 the script requires the artifact block to already match and fails with a clear
 message otherwise.
 
+The generated inputs (cargo vendor tree and pub cache) are recorded from
+--inputs-dir, or from --cargo-vendor-sha256 / --pubcache-sha256.
+
 Usage:
   scripts/prepare-release.py --version 0.2.0 [--prerelease beta.1]
-      [--channel beta] --commit <40-hex> [--veshell-src DIR] [--manifest FILE]
+      [--channel beta] --commit <40-hex> [--veshell-src DIR]
+      [--inputs-dir DIR | --cargo-vendor-sha256 H --pubcache-sha256 H]
 
 With --veshell-src (or VESHELL_SRC) the Flutter version, engine revision and the
 Nix engine pin are read from that checkout and must agree with it.
@@ -23,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -41,6 +47,18 @@ except ModuleNotFoundError:  # Python < 3.11
 def fail(message: str) -> "NoReturn":  # noqa: F821
     print(f"error: {message}", file=sys.stderr)
     raise SystemExit(1)
+
+
+def release_id(version: str, prerelease: str) -> str:
+    return f"{version}-{prerelease}" if prerelease else version
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def sync_pins(manifest: dict, veshell_src: Path) -> None:
@@ -85,6 +103,22 @@ def sync_pins(manifest: dict, veshell_src: Path) -> None:
     }
 
 
+def sync_inputs(manifest: dict, args: argparse.Namespace) -> None:
+    release = release_id(manifest["version"], manifest.get("prerelease") or "")
+
+    base = manifest["mirrors"]["inputs"].rsplit("/", 1)[0]
+    manifest["mirrors"]["inputs"] = f"{base}/packaging-inputs-v{release}"
+
+    vendor, pubcache = args.cargo_vendor_sha256, args.pubcache_sha256
+    if args.inputs_dir is not None:
+        vendor = sha256(args.inputs_dir / f"veshell-cargo-vendor-{release}.tar.zst")
+        pubcache = sha256(args.inputs_dir / f"veshell-pubcache-{release}.tar.zst")
+    if vendor is not None:
+        manifest["inputs"]["cargo_vendor"]["sha256"] = vendor
+    if pubcache is not None:
+        manifest["inputs"]["pubcache"]["sha256"] = pubcache
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--version", required=True)
@@ -93,6 +127,9 @@ def main() -> int:
     parser.add_argument("--commit", required=True)
     parser.add_argument("--veshell-src", type=Path)
     parser.add_argument("--manifest", type=Path, default=ROOT / "release.json")
+    parser.add_argument("--inputs-dir", type=Path, help="directory with the generated input tarballs")
+    parser.add_argument("--cargo-vendor-sha256")
+    parser.add_argument("--pubcache-sha256")
     parser.add_argument("--no-render", action="store_true", help="only update the manifest")
     args = parser.parse_args()
 
@@ -102,6 +139,9 @@ def main() -> int:
         fail(f"--prerelease must be [A-Za-z0-9.]+, got {args.prerelease!r}")
     if not re.fullmatch(r"[0-9a-f]{40}", args.commit):
         fail(f"--commit must be a full 40-character sha, got {args.commit!r}")
+    for name, value in (("--cargo-vendor-sha256", args.cargo_vendor_sha256), ("--pubcache-sha256", args.pubcache_sha256)):
+        if value is not None and not re.fullmatch(r"[0-9a-f]{64}", value):
+            fail(f"{name} must be a 64-character sha256, got {value!r}")
     if not args.manifest.is_file():
         fail(f"manifest not found: {args.manifest}")
 
@@ -120,10 +160,11 @@ def main() -> int:
 
     if veshell_src is not None:
         sync_pins(manifest, veshell_src)
+    sync_inputs(manifest, args)
 
     args.manifest.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
-    release_id = args.version + (f"-{args.prerelease}" if args.prerelease else "")
-    print(f"prepared {args.manifest.name}: {release_id} ({args.channel}) at {args.commit[:7]}")
+    release = release_id(args.version, args.prerelease)
+    print(f"prepared {args.manifest.name}: {release} ({args.channel}) at {args.commit[:7]}")
 
     if not args.no_render:
         cmd = [sys.executable, str(ROOT / "scripts" / "render-recipes.py"), str(args.manifest)]
