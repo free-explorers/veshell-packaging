@@ -54,6 +54,8 @@ def release_id(version: str, prerelease: str) -> str:
 
 
 def sha256(path: Path) -> str:
+    if not path.is_file():
+        fail(f"missing generated input: {path}")
     digest = hashlib.sha256()
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1 << 20), b""):
