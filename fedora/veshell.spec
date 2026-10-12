@@ -26,9 +26,10 @@
 
 %global debug_package %{nil}
 
-# Fedora enables LTO by default. The libspa-sys build script compiles a C shim
-# into a static archive; LTO objects there are not resolved by rustc's final
-# (non-LTO) link. Disable LTO for this package.
+# This silences Fedora's C LTO, and only that. The libspa-sys build script
+# compiles a C shim that would become GCC LTO objects, which rustc's final link
+# cannot resolve because it does not pass -flto to the linker. The Rust code is
+# optimized separately with ThinLTO through Cargo's [profile.release].
 %global _lto_cflags %{nil}
 
 Name:           veshell

@@ -36,6 +36,16 @@ except ModuleNotFoundError:  # pragma: no cover - Python < 3.11
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MANIFEST = ROOT / "release.json"
 
+
+def display(path: Path) -> str:
+    # Callers pass the manifest both absolutely and relative to the working
+    # directory (the workflows pass "packaging/release.json"), so never assume it
+    # is under ROOT.
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
 HELPER = ROOT / "scripts" / "build-veshell.sh"
 RECIPES = ("arch", "fedora", "debian")
 
@@ -319,15 +329,15 @@ def main() -> int:
 
     if args.check:
         if out_of_date:
-            print("recipes out of date with %s:" % manifest_path.relative_to(ROOT), file=sys.stderr)
+            print("recipes out of date with %s:" % display(manifest_path), file=sys.stderr)
             for rel in out_of_date:
                 print(f"  {rel}", file=sys.stderr)
             print("run scripts/render-recipes.py", file=sys.stderr)
             return 1
-        print(f"recipes are up to date with {manifest_path.relative_to(ROOT)}")
+        print(f"recipes are up to date with {display(manifest_path)}")
         return 0
 
-    print(f"manifest: {manifest_path.relative_to(ROOT)} "
+    print(f"manifest: {display(manifest_path)} "
           f"({tokens['CHANNEL']}, release {tokens['RELEASE_ID']})")
 
     if shutil.which("makepkg"):
