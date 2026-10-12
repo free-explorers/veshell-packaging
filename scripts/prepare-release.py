@@ -84,20 +84,27 @@ def sync_pins(manifest: dict, veshell_src: Path) -> None:
     if flutter_version not in sdk_pins:
         fail(f"nix/flutter-sdk.json has no entry for Flutter {flutter_version}")
     engine_revision = sdk_pins[flutter_version]["engineVersion"]
-    engine_source = json.loads((veshell_src / "nix" / "engine-repository.json").read_text())
 
-    flutter = manifest["flutter"]
-    if flutter_version != flutter["version"]:
-        artifacts = [("sdk", flutter["sdk"])] + list(flutter["artifacts"].items()) + [("engine", flutter["engine"])]
-        stale = [label for label, artifact in artifacts if engine_revision not in artifact["url"]]
-        if stale:
-            fail(
-                f"the checkout pins Flutter {flutter_version} (engine {engine_revision}) but the "
-                f"upstream artifact block is stale ({', '.join(stale)}); update it as a dependency "
-                "upgrade before releasing"
-            )
-        flutter["version"] = flutter_version
-    flutter["engine_revision"] = engine_revision
+    artifacts_path = veshell_src / "nix" / "flutter-artifacts.json"
+    if not artifacts_path.is_file():
+        fail(f"missing nix/flutter-artifacts.json in --veshell-src {veshell_src}")
+    artifact_pins = json.loads(artifacts_path.read_text())
+    if flutter_version not in artifact_pins:
+        fail(f"nix/flutter-artifacts.json has no entry for Flutter {flutter_version}")
+    entry = artifact_pins[flutter_version]
+
+    # The Flutter provenance (SDK/artifact/engine URLs and hashes) is app-owned;
+    # the manifest mirrors it rather than storing its own copy.
+    manifest["flutter"] = {
+        "version": flutter_version,
+        "channel": entry["channel"],
+        "engine_revision": engine_revision,
+        "sdk": entry["sdk"],
+        "artifacts": entry["artifacts"],
+        "engine": entry["engine"],
+    }
+
+    engine_source = json.loads((veshell_src / "nix" / "engine-repository.json").read_text())
     manifest["nix"]["engine_source"] = {
         "repository": engine_source["repository"],
         "revision": engine_source["revision"],
