@@ -24,9 +24,11 @@
 
 include /usr/share/dpkg/default.mk
 
-# Debian may enable LTO through dpkg-buildflags. The libspa-sys build script
-# compiles a C shim into a static archive; LTO objects there are not resolved
-# by rustc's final (non-LTO) link. Disable LTO for this package.
+# This silences Debian's C LTO, and only that. dpkg-buildflags would add -flto
+# to CFLAGS; the libspa-sys build script would then compile a C shim into GCC LTO
+# objects, which rustc's final link cannot resolve because it does not pass -flto
+# to the linker. The Rust code is optimized separately with ThinLTO through
+# Cargo's [profile.release].
 export DEB_BUILD_OPTIONS := $(DEB_BUILD_OPTIONS) nolto
 
 VESHELL_INPUT_DIR ?= $(CURDIR)/debian/inputs
