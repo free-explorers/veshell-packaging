@@ -93,7 +93,7 @@ consume **pinned, checksummed upstream Flutter artifacts**. Concretely:
 | Veshell source | git commit | `_veshell_commit` |
 | Flutter SDK | official stable bundle | sha256 |
 | Flutter engine artifacts | `flutter_infra_release` | sha256 (6 zips) |
-| Flutter embedder engine | meta-flutter release (transitional, see `engine/`) | sha256 |
+| Flutter embedder engine | `free-explorers/flutter-engine` release | sha256 |
 | Rust crates | `cargo vendor` | generated tarball sha256 |
 | Dart packages | pub cache | generated tarball sha256 |
 
@@ -101,14 +101,12 @@ consume **pinned, checksummed upstream Flutter artifacts**. Concretely:
 Rust build runs with `CARGO_NET_OFFLINE=true` against the vendored crate tree.
 `scripts/generate-inputs.sh verify` re-checks every upstream hash.
 
-**Engine strategy.** The distro recipes currently consume the prebuilt
-meta-flutter engine (`flutter.engine`). The dedicated engine repository
-`free-explorers/flutter-engine` source-builds a portable engine SDK and
-publishes it **there** — engine releases are never held in this repository.
-`engine/README.md` documents it and the switch. Once a revision is published,
-point `flutter.engine` at it, re-render, and set `VESHELL_ENGINE_REPO` for dev
-builds. The Nix channel already source-builds its engine through
-`free-explorers/flutter-engine-nix`, pinned as `nix.engine_source`.
+**Engine strategy.** The distro recipes consume the prebuilt portable engine SDK
+from `free-explorers/flutter-engine` (`flutter.engine`) — engine releases are
+never held in this repository. `engine/README.md` documents it. The Nix channel
+source-builds its own engine through `free-explorers/flutter-engine-nix`, pinned
+as `nix.engine_source`; that build is patched to the Nix loader, so it is not
+usable on a distro, and the two are deliberately separate builds.
 
 ### Single source of truth
 

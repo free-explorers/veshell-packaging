@@ -6,7 +6,7 @@
 #
 # Builds the Dart shell and the Rust compositor from source, entirely offline.
 # All external Flutter inputs are pinned and checksummed: the official Flutter
-# SDK bundle, the matching engine artifacts, and the meta-flutter embedder
+# SDK bundle, the matching engine artifacts, and the portable embedder
 # engine. `build-veshell.sh` is a copy of scripts/build-veshell.sh.
 #
 # The two generated inputs (Cargo vendor tree, Dart pub cache) are published
