@@ -15,8 +15,9 @@ name: Install smoke test
 # before installing, and asserts the installed version matches release.json, so
 # it can never quietly pass against a previous release. AUR and COPR serve the
 # build synchronously, so they get a short budget and fail fast; OBS rebuilds
-# and publishes server-side afterwards, which has taken the publisher anywhere
-# from minutes to well over an hour, so those four legs are patient instead.
+# and publishes server-side afterwards, on its own schedule. That has taken the
+# publisher 10-85 minutes for 0.1.2 and over an hour for 0.1.3, which landed
+# just after a 60 minute budget expired, so those four legs wait well past that.
 
 on:
   workflow_dispatch:
@@ -46,7 +47,9 @@ jobs:
       (github.event_name == 'workflow_dispatch' ||
        startsWith(github.event.workflow_run.head_branch, 'v'))
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    # Must exceed the OBS legs' wait budget below: the publisher has taken over
+    # an hour to promote a repository after the recipes were submitted.
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
@@ -93,11 +96,12 @@ jobs:
           echo "expecting version prefix: $expected"
           # OBS publishes its repositories asynchronously, when its publisher
           # reaches them: the 0.1.2 repositories took between 10 and 85 minutes
-          # to appear. Give those legs an hour and let the channels that are
-          # already serving the build fail fast instead.
+          # to appear, and 0.1.3 outlasted a 60 minute budget. Give those legs
+          # 150 minutes and let the channels that are already serving the build
+          # fail fast instead.
           case "$CHANNEL" in
-            deb:*|zypper*) wait_attempts=60; wait_sleep=60 ;;
-            *)             wait_attempts=20; wait_sleep=30 ;;
+            deb:*|zypper*) wait_attempts=150; wait_sleep=60 ;;
+            *)             wait_attempts=20;  wait_sleep=30 ;;
           esac
           docker run --rm \
             -v "$PWD:/work" -w /work \
