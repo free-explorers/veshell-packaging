@@ -17,7 +17,8 @@ name: Release
 #
 # Channels are split by distribution: AUR = Arch, COPR = Fedora,
 # OBS = openSUSE/DEB, Nix = NixOS. Do not give OBS Fedora targets.
-# The Nix channel runs in nix-package-release.yml on the same release event.
+# Nix needs no job here: the flake is published from the application repository
+# and the engine is cached by the engine repository.
 #
 # Optional repository variables (defaults shown):
 #   VESHELL_REPO          free-explorers/veshell

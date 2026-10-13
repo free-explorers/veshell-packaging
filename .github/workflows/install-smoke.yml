@@ -8,11 +8,15 @@ name: Install smoke test
 # This deliberately does not start the compositor. Containers have no /dev/dri,
 # and installing a display server to fake one would itself pull several of the
 # very libraries under test, hiding exactly the failure this job guards against.
-# The runtime (DRM backend) smoke test lives in the VM harness instead.
+# Starting the compositor (the DRM backend) is not covered here, and is not
+# automated anywhere yet.
 #
 # The job waits, bounded, for the release's own build to appear on each channel
 # before installing, and asserts the installed version matches release.json, so
-# it can never quietly pass against a previous release.
+# it can never quietly pass against a previous release. AUR and COPR serve the
+# build synchronously, so they get a short budget and fail fast; OBS rebuilds
+# and publishes server-side afterwards, which has taken the publisher anywhere
+# from minutes to well over an hour, so those four legs are patient instead.
 
 on:
   workflow_dispatch:
@@ -87,8 +91,16 @@ jobs:
           set -euo pipefail
           expected="$(python3 -c 'import json; print(json.load(open("release.json"))["version"])')"
           echo "expecting version prefix: $expected"
+          # OBS publishes its repositories asynchronously, when its publisher
+          # reaches them: the 0.1.2 repositories took between 10 and 85 minutes
+          # to appear. Give those legs an hour and let the channels that are
+          # already serving the build fail fast instead.
+          case "$CHANNEL" in
+            deb:*|zypper*) wait_attempts=60; wait_sleep=60 ;;
+            *)             wait_attempts=20; wait_sleep=30 ;;
+          esac
           docker run --rm \
             -v "$PWD:/work" -w /work \
-            -e SMOKE_WAIT_ATTEMPTS=20 -e SMOKE_WAIT_SLEEP=30 \
+            -e SMOKE_WAIT_ATTEMPTS="$wait_attempts" -e SMOKE_WAIT_SLEEP="$wait_sleep" \
             "${{ matrix.image }}" \
             bash ci/smoke-install.sh "$CHANNEL" "$expected"
