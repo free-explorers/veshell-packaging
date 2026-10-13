@@ -17,12 +17,12 @@
 # that blocker is documented in README.md. This spec is intended for
 # a COPR / self-hosted repository.
 
-%global commit df1b57fda552d7957dbb64bf05358f192c400592
-%global shortcommit df1b57f
+%global commit fdba188e4d0ef2bda6c342dd042db2afebadd0f2
+%global shortcommit fdba188
 %global flutter_version 3.47.7
 %global engine_revision deb287481e3ce9468f3434937ced4240a70539ca
 %global artifact_base https://storage.googleapis.com/flutter_infra_release/flutter/%{engine_revision}
-%global input_mirror https://github.com/free-explorers/veshell-packaging/releases/download/packaging-inputs-v0.1.2
+%global input_mirror https://github.com/free-explorers/veshell-packaging/releases/download/packaging-inputs-v0.1.3
 
 %global debug_package %{nil}
 
@@ -33,7 +33,7 @@
 %global _lto_cflags %{nil}
 
 Name:           veshell
-Version:        0.1.2
+Version:        0.1.3
 Release:        1%{?dist}
 Summary:        An innovative Not-Desktop environment for Linux built with Flutter and Rust
 License:        GPL-3.0-or-later
@@ -56,8 +56,8 @@ Source7:        linux-x64-profile_flutter-gtk.zip
 Source8:        linux-x64-release_flutter-gtk.zip
 # https://github.com/free-explorers/flutter-engine/releases/download/linux-engine-sdk-release-x86_64-%{engine_revision}/linux-engine-sdk-release-x86_64-%{engine_revision}.tar.gz
 Source9:        linux-engine-sdk-release-x86_64-%{engine_revision}.tar.gz
-Source10:       veshell-cargo-vendor-0.1.2.tar.zst
-Source11:       veshell-pubcache-0.1.2.tar.zst
+Source10:       veshell-cargo-vendor-0.1.3.tar.zst
+Source11:       veshell-pubcache-0.1.3.tar.zst
 
 # Runtime dependencies (fonts, DRM/GL, session bus, audio, capture, portals).
 Requires:       fontconfig
@@ -161,5 +161,5 @@ bash %{SOURCE1} install
 %{_userunitdir}/veshell-shutdown.target
 
 %changelog
-* Tue Oct 13 2026 Adrien Peslerbe <adrien@pesler.be> - 0.1.2-1
-- Veshell 0.1.2 (beta).
+* Tue Oct 13 2026 Adrien Peslerbe <adrien@pesler.be> - 0.1.3-1
+- Veshell 0.1.3 (beta).
