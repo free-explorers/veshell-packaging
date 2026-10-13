@@ -9,3 +9,8 @@ arch/*.pkg.tar.*
 arch/*.log
 */debian/.build-inputs/
 __pycache__/
+
+# .SRCINFO is makepkg's parse of PKGBUILD. It is generated inside the Arch
+# container by the aur job, just before publishing, so a tracked copy would only
+# ever go stale next to a freshly rendered PKGBUILD.
+.SRCINFO
