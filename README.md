@@ -58,11 +58,9 @@ not a working tree in this repository; `scripts/build-veshell.sh` consumes it vi
 ├── engine/README.md             # the engine repository and the switch to it
 ├── arch/
 │   ├── PKGBUILD                 # Arch / Manjaro source package (generated)
-│   ├── build-veshell.sh         # copy of scripts/build-veshell.sh
-│   └── .SRCINFO
+│   └── build-veshell.sh         # copy of scripts/build-veshell.sh
 ├── arch-git/
-│   ├── PKGBUILD                 # AUR veshell-git (VCS; not generated per release)
-│   └── .SRCINFO
+│   └── PKGBUILD                 # AUR veshell-git (VCS; not generated per release)
 ├── fedora/
 │   ├── veshell.spec             # Fedora source RPM (generated)
 │   └── build-veshell.sh
@@ -134,10 +132,10 @@ hand is a mistake: change `release.json` or the templates and re-render.
 2. **prebuilt** — builds `veshell-<release>-x86_64.tar.zst` inside an
    `archlinux:base-devel` container, attests `SHA256SUMS`, and uploads both to
    the release.
-3. **aur** — regenerates `.SRCINFO`, renders `veshell-bin` from the prebuilt
-   hash, and pushes `veshell`, `veshell-bin` and `veshell-git` to the AUR. The
-   `veshell-git` recipe tracks the VCS and rebuilds the shell through Veshell's
-   own development bootstrap.
+3. **aur** — regenerates `.SRCINFO` (generated in-container, not tracked),
+   renders `veshell-bin` from the prebuilt hash, and pushes `veshell`,
+   `veshell-bin` and `veshell-git` to the AUR. The `veshell-git` recipe tracks
+   the VCS and rebuilds the shell through Veshell's own development bootstrap.
 4. **copr** — builds the `veshell-bin` SRPM from the prebuilt payload and
    submits it to COPR.
 5. **obs** — commits the `veshell-bin` spec, changes and prebuilt payload to the
