@@ -194,8 +194,8 @@ It waits, bounded, for the release's own build to appear on each channel and
 asserts the installed version matches `release.json`, so it can never quietly
 pass against a previous release. It deliberately does **not** start the
 compositor: containers have no `/dev/dri`, and installing a display server to
-fake one would pull several of the very libraries under test. The runtime
-(DRM backend) smoke test is done in a VM instead.
+fake one would pull several of the very libraries under test. Starting the
+compositor (the DRM backend) is not covered by any automated check yet.
 
 Every channel job is a no-op until its secret is configured, so a release still
 succeeds before the channels are set up:
