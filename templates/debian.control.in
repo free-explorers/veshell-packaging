@@ -24,7 +24,8 @@ Build-Depends:
  libpixman-1-dev,
  libseat-dev,
  libudev-dev,
- libxkbcommon-dev
+ libxkbcommon-dev,
+ libxkbregistry-dev
 Standards-Version: 4.6.2
 Homepage: https://github.com/free-explorers/veshell
 
@@ -45,6 +46,7 @@ Depends:
  libinput10,
  libseat1,
  libxkbcommon0,
+ libxkbregistry0,
  systemd | systemd-standalone-sysusers,
  pipewire | pulseaudio,
  gstreamer1.0-plugins-base,
