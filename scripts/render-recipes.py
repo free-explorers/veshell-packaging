@@ -243,6 +243,7 @@ def build_tokens(manifest: dict) -> dict[str, str]:
         "RELEASE_ID": release_id,
         "PRERELEASE": prerelease,
         "CHANNEL": manifest["channel"],
+        "BUILD_CHANNEL": prerelease or manifest["channel"],
         "COMMIT": manifest["commit"],
         "SHORTCOMMIT": manifest["commit"][:7],
         "MAINTAINER": manifest["maintainer"],

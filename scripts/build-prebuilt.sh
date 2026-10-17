@@ -31,13 +31,24 @@ out="${2:?usage: build-prebuilt.sh INPUTS_DIR OUT_DIR}"
   exit 1
 }
 
-release_id="$(python3 - "$manifest" <<'PY'
+mapfile -t manifest_identity < <(python3 - "$manifest" <<'PY'
 import json, sys
 m = json.load(open(sys.argv[1]))
 pre = m.get("prerelease")
 print(f"{m['version']}-{pre}" if pre else m["version"])
+print(m["commit"])
+print(pre or m["channel"])
 PY
-)"
+)
+release_id="${manifest_identity[0]}"
+# The prebuilt payload is built once from release.json's pinned commit; embed
+# that exact identity so `veshell --version` in the published package reports
+# the source it was built from, not the checkout that happens to be present.
+# The prerelease id is more precise than the release channel when both exist.
+VESHELL_BUILD_COMMIT="${manifest_identity[1]}"
+VESHELL_BUILD_CHANNEL="${manifest_identity[2]}"
+export VESHELL_BUILD_COMMIT VESHELL_BUILD_CHANNEL
+printf 'build identity: %s (%s)\n' "$VESHELL_BUILD_COMMIT" "$VESHELL_BUILD_CHANNEL" >&2
 
 export FLUTTER_SDK_DIR="$inputs/flutter-sdk"
 export FLUTTER_ARTIFACT_DIR="$inputs/artifacts"

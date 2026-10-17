@@ -58,6 +58,8 @@ override_dh_auto_build:
 	CARGO_VENDOR_DIR=$(CARGO_VENDOR_DIR) \
 	PUB_CACHE_DIR=$(PUB_CACHE_DIR) \
 	POLKIT_HELPER_PATH=@POLKIT_HELPER@ \
+	VESHELL_BUILD_COMMIT=@COMMIT@ \
+	VESHELL_BUILD_CHANNEL=@BUILD_CHANNEL@ \
 	PREFIX=/usr JOBS=$$(nproc) \
 	bash debian/build-veshell.sh build
 

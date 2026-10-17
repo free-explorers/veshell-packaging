@@ -76,7 +76,7 @@ source=(
 )
 sha256sums=(
   'SKIP'  # pinned git commit
-  '73dd315ec63d0087aefb1faba324a30f1cd716dcd6c220af8bebe13ca55ff458'  # build-veshell.sh
+  'f60220a1ec5b5d6a71c79532ec009e28d0d6d7cd9ccdd5046721758c964542a8'  # build-veshell.sh
   'af7455f540df951184c7953fbe3cf884766e7541dacf8571f9f582db03dd6230'  # Flutter SDK
   'e80fa5e63f51751507627456294bef28419c4facd09c33f7f49a7b4d986846f3'  # patched_sdk
   '8b2ad98bd8c2f86e647da5c3863de0ffb34dc00887a005c8074971ebd76e4454'  # patched_sdk_product
@@ -123,6 +123,8 @@ build() {
   PUB_CACHE_DIR="$srcdir/pubcache" \
   PREFIX=/usr \
   POLKIT_HELPER_PATH=/usr/lib/polkit-1/polkit-agent-helper-1 \
+  VESHELL_BUILD_COMMIT="$_veshell_commit" \
+  VESHELL_BUILD_CHANNEL="beta" \
   JOBS="$(nproc)" \
   bash "$srcdir/build-veshell.sh" build
 }
