@@ -123,6 +123,8 @@ build() {
   PUB_CACHE_DIR="$srcdir/pubcache" \
   PREFIX=/usr \
   POLKIT_HELPER_PATH=@POLKIT_HELPER@ \
+  VESHELL_BUILD_COMMIT="$_veshell_commit" \
+  VESHELL_BUILD_CHANNEL="@BUILD_CHANNEL@" \
   JOBS="$(nproc)" \
   bash "$srcdir/build-veshell.sh" build
 }

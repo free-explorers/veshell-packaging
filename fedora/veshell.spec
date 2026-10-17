@@ -137,6 +137,8 @@ export ENGINE_TARBALL="%{SOURCE9}"
 export CARGO_VENDOR_DIR="%{_builddir}/cargo-vendor"
 export PUB_CACHE_DIR="%{_builddir}/pubcache"
 export POLKIT_HELPER_PATH="/usr/lib/polkit-1/polkit-agent-helper-1"
+export VESHELL_BUILD_COMMIT="%{commit}"
+export VESHELL_BUILD_CHANNEL="beta"
 export PREFIX="%{_prefix}"
 export JOBS="$(nproc)"
 bash %{SOURCE1} build

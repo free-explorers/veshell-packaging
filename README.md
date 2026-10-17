@@ -122,6 +122,15 @@ run when a recipe's copy of `build-veshell.sh` drifts from the canonical helper.
 covers the distro recipes and the Nix packaging. Editing a rendered recipe by
 hand is a mistake: change `release.json` or the templates and re-render.
 
+The same manifest identity is passed into the build as
+`VESHELL_BUILD_COMMIT` (the pinned commit) and `VESHELL_BUILD_CHANNEL` (the
+prerelease id when present, otherwise the release channel). The prebuilt
+payload uses the same values. Once the pinned Veshell revision supports it,
+`veshell --version` reports the source and channel the package was built from;
+older revisions ignore the variables. The shared helper falls back to the
+checkout's `git HEAD` when a source recipe does not pass a commit, which also
+covers `veshell-git` builds.
+
 ## Release pipeline
 
 `.github/workflows/release.yml` runs when a GitHub release is published:

@@ -58,6 +58,8 @@ override_dh_auto_build:
 	CARGO_VENDOR_DIR=$(CARGO_VENDOR_DIR) \
 	PUB_CACHE_DIR=$(PUB_CACHE_DIR) \
 	POLKIT_HELPER_PATH=/usr/lib/polkit-1/polkit-agent-helper-1 \
+	VESHELL_BUILD_COMMIT=f63384e3a0d68b62428c810f1a6463e11b444a46 \
+	VESHELL_BUILD_CHANNEL=beta \
 	PREFIX=/usr JOBS=$$(nproc) \
 	bash debian/build-veshell.sh build
 
