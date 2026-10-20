@@ -1,7 +1,7 @@
-veshell (0.1.6-1) unstable; urgency=medium
+veshell (0.1.7-1) unstable; urgency=medium
 
-  * Veshell 0.1.6 (beta).
+  * Veshell 0.1.7 (beta).
   * Build the Dart shell from source against the pinned Flutter SDK and
     matching engine artifacts, then the Rust compositor from vendored crates.
 
- -- Adrien Peslerbe <adrien@pesler.be>  Sat, 17 Oct 2026 20:49:11 +0000
+ -- Adrien Peslerbe <adrien@pesler.be>  Tue, 20 Oct 2026 21:50:23 +0000

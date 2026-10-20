@@ -18,8 +18,8 @@
 #   linux-x64-profile_flutter-gtk.zip
 #   linux-x64-release_flutter-gtk.zip
 #   linux-engine-sdk-release-x86_64-deb287481e3ce9468f3434937ced4240a70539ca.tar.gz
-#   veshell-cargo-vendor-0.1.6.tar.zst
-#   veshell-pubcache-0.1.6.tar.zst
+#   veshell-cargo-vendor-0.1.7.tar.zst
+#   veshell-pubcache-0.1.7.tar.zst
 # See README.md for why this blocks a Debian main upload.
 
 include /usr/share/dpkg/default.mk
@@ -48,8 +48,8 @@ override_dh_auto_configure:
 	mkdir -p $(FLUTTER_SDK_DIR) $(CARGO_VENDOR_DIR) $(PUB_CACHE_DIR)
 	tar -xJf $(VESHELL_INPUT_DIR)/flutter_linux_3.47.7-stable.tar.xz \
 		-C $(FLUTTER_SDK_DIR) --strip-components=1
-	tar -xf $(VESHELL_INPUT_DIR)/veshell-cargo-vendor-0.1.6.tar.zst -C $(CARGO_VENDOR_DIR)
-	tar -xf $(VESHELL_INPUT_DIR)/veshell-pubcache-0.1.6.tar.zst -C $(PUB_CACHE_DIR)
+	tar -xf $(VESHELL_INPUT_DIR)/veshell-cargo-vendor-0.1.7.tar.zst -C $(CARGO_VENDOR_DIR)
+	tar -xf $(VESHELL_INPUT_DIR)/veshell-pubcache-0.1.7.tar.zst -C $(PUB_CACHE_DIR)
 
 override_dh_auto_build:
 	FLUTTER_SDK_DIR=$(FLUTTER_SDK_DIR) \
@@ -58,7 +58,7 @@ override_dh_auto_build:
 	CARGO_VENDOR_DIR=$(CARGO_VENDOR_DIR) \
 	PUB_CACHE_DIR=$(PUB_CACHE_DIR) \
 	POLKIT_HELPER_PATH=/usr/lib/polkit-1/polkit-agent-helper-1 \
-	VESHELL_BUILD_COMMIT=a88da8e987907cf6f2041e7f25c8c6b39970a71e \
+	VESHELL_BUILD_COMMIT=022539915144bed4f9275d9e8394c6df77543ef0 \
 	VESHELL_BUILD_CHANNEL=beta \
 	PREFIX=/usr JOBS=$$(nproc) \
 	bash debian/build-veshell.sh build
