@@ -18,6 +18,7 @@ libinput
 seatd
 mesa
 openssl
+pam
 pipewire
 gstreamer
 gst-plugins-base-libs

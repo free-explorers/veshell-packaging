@@ -22,15 +22,18 @@ depends=(
   'libdisplay-info' 'wayland'
   'pipewire' 'libpulse'
   'gst-plugins-base' 'gst-plugins-base-libs' 'gst-plugins-good'
-  'dbus' 'upower' 'polkit'
+  'dbus' 'upower' 'polkit' 'pam'
   'xorg-xwayland' 'xdg-desktop-portal' 'xdg-utils'
 )
 optdepends=(
   'networkmanager: network control panel'
   'bluez: Bluetooth control panel'
   'rtkit: real-time audio scheduling'
+  'fprintd: fingerprint unlock on the lock screen'
   'xdg-desktop-portal-gtk: GTK portal fallback backend'
 )
+# Lock screen PAM services: keep local edits across upgrades.
+backup=('etc/pam.d/veshell' 'etc/pam.d/veshell-fingerprint')
 provides=('veshell' 'wayland-compositor')
 conflicts=('veshell' 'veshell-git')
 
