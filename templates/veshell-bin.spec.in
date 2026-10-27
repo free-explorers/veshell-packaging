@@ -46,6 +46,7 @@ Requires:       gstreamer-plugins-base
 Requires:       gstreamer-plugins-good
 Requires:       pipewire-pulseaudio
 Requires:       polkit
+Requires:       pam
 Requires:       upower
 Requires:       xdg-desktop-portal
 Requires:       xdg-utils
@@ -55,6 +56,7 @@ Recommends:     NetworkManager
 Recommends:     bluez
 Recommends:     rtkit
 Recommends:     xdg-desktop-portal-gtk
+Suggests:       fprintd-pam
 %else
 Requires:       fontconfig
 Requires:       google-roboto-fonts
@@ -78,6 +80,7 @@ Requires:       gstreamer1-plugins-good
 Requires:       dbus
 Requires:       upower
 Requires:       polkit
+Requires:       pam
 Requires:       xorg-x11-server-Xwayland
 Requires:       xdg-desktop-portal
 Requires:       xdg-utils
@@ -86,6 +89,7 @@ Recommends:     NetworkManager
 Recommends:     bluez
 Recommends:     rtkit
 Recommends:     xdg-desktop-portal-gtk
+Suggests:       fprintd-pam
 %endif
 
 BuildRequires:  zstd
@@ -104,7 +108,7 @@ zstd -dc '%{SOURCE0}' | tar -xf - -C .
 
 %install
 mkdir -p %{buildroot}
-cp -a usr %{buildroot}/
+cp -a usr etc %{buildroot}/
 
 %files
 /usr/bin/veshell
@@ -117,6 +121,8 @@ cp -a usr %{buildroot}/
 /usr/share/xdg-desktop-portal/portals/veshell.portal
 %{_userunitdir}/veshell.service
 %{_userunitdir}/veshell-shutdown.target
+%config(noreplace) /etc/pam.d/veshell
+%config(noreplace) /etc/pam.d/veshell-fingerprint
 %license /usr/share/licenses/veshell/LICENSE
 %if 0%{?suse_version}
 # OBS rejects a package whose files land in directories that no package owns.

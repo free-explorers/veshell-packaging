@@ -20,6 +20,7 @@ libseat-dev
 libgbm-dev
 libglvnd-dev
 libssl-dev
+libpam0g-dev
 libpipewire-0.3-dev
 libgstreamer1.0-dev
 libgstreamer-plugins-base1.0-dev

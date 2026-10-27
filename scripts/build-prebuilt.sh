@@ -5,7 +5,7 @@
 # inputs prepared by fetch-inputs.sh, stages the payload with the project
 # Makefile, and packs it as a plain tarball for the GitHub release:
 #
-#   OUT/veshell-<release>-x86_64.tar.zst   payload rooted at usr/...
+#   OUT/veshell-<release>-x86_64.tar.zst   payload rooted at usr/... and etc/pam.d/
 #   OUT/SHA256SUMS                          sha256 of the payload tarball
 #
 # The tarball is the source for the AUR `veshell-bin` package and for users on

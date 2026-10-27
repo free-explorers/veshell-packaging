@@ -10,8 +10,9 @@ All recipes share one hermetic build model and build the **same** payload:
 2. compile the Rust compositor from source against that shell, with no network
    access (vendored crates),
 3. install the compositor, the AOT shell, the matching Flutter embedder engine,
-   the assets/settings, the session scripts, the systemd user units and the
-   xdg-desktop-portal descriptors.
+   the assets/settings, the session scripts, the systemd user units, the
+   xdg-desktop-portal descriptors and the lock screen PAM services
+   (`/etc/pam.d/veshell`, `/etc/pam.d/veshell-fingerprint`).
 
 The packaged source is a Veshell checkout pinned by `release.json` (`commit`),
 not a working tree in this repository; `scripts/build-veshell.sh` consumes it via

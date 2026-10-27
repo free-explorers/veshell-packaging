@@ -82,6 +82,7 @@ Requires:       gstreamer1-plugins-good
 Requires:       dbus
 Requires:       upower
 Requires:       polkit
+Requires:       pam
 Requires:       xorg-x11-server-Xwayland
 Requires:       xdg-desktop-portal
 Requires:       xdg-utils
@@ -90,6 +91,8 @@ Recommends:     NetworkManager
 Recommends:     bluez
 Recommends:     rtkit
 Recommends:     xdg-desktop-portal-gtk
+# Fingerprint unlock on the lock screen.
+Suggests:       fprintd-pam
 
 BuildRequires:  rust
 BuildRequires:  cargo
@@ -108,6 +111,7 @@ BuildRequires:  libseat-devel
 BuildRequires:  mesa-libgbm-devel
 BuildRequires:  libglvnd-devel
 BuildRequires:  openssl-devel
+BuildRequires:  pam-devel
 BuildRequires:  pipewire-devel
 BuildRequires:  gstreamer1-devel
 BuildRequires:  gstreamer1-plugins-base-devel
@@ -161,6 +165,8 @@ bash %{SOURCE1} install
 %{_datadir}/xdg-desktop-portal/portals/veshell.portal
 %{_userunitdir}/veshell.service
 %{_userunitdir}/veshell-shutdown.target
+%config(noreplace) %{_sysconfdir}/pam.d/veshell
+%config(noreplace) %{_sysconfdir}/pam.d/veshell-fingerprint
 
 %changelog
 * Tue Oct 20 2026 Adrien Peslerbe <adrien@pesler.be> - 0.1.7-1

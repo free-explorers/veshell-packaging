@@ -20,6 +20,7 @@ Build-Depends:
  libgstreamer-plugins-base1.0-0,
  libgstreamer1.0-0,
  libinput-dev,
+ libpam0g-dev,
  libpipewire-0.3-dev,
  libpixman-1-dev,
  libseat-dev,
@@ -64,6 +65,8 @@ Recommends:
  bluez,
  rtkit,
  xdg-desktop-portal-gtk
+Suggests:
+ libpam-fprintd
 Description: innovative Not-Desktop environment built with Flutter and Rust
  Veshell is a Wayland/drm compositor paired with a Flutter shell. It provides
  a predictable, spatially organized workflow and reduces the need to manage

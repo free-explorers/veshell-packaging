@@ -188,7 +188,8 @@ for p in /usr/bin/veshell /usr/bin/veshell-session /usr/bin/veshell-session-stop
          /usr/share/veshell/data/flutter_assets \
          /usr/share/wayland-sessions/veshell.desktop \
          /usr/share/xdg-desktop-portal/portals/veshell.portal \
-         /usr/lib/systemd/user/veshell.service; do
+         /usr/lib/systemd/user/veshell.service \
+         /etc/pam.d/veshell /etc/pam.d/veshell-fingerprint; do
   if [[ -e $p ]]; then printf '  OK   %s\n' "$p"; else bad "missing $p"; fi
 done
 
