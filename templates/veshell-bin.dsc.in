@@ -16,6 +16,7 @@ Build-Depends:
  libgstreamer-plugins-base1.0-0,
  libgstreamer1.0-0,
  libinput-dev,
+ libpam0g-dev,
  libpipewire-0.3-dev,
  libpixman-1-dev,
  libseat-dev,
