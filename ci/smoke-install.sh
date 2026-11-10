@@ -77,7 +77,9 @@ add_repo() {
       dnf copr enable -y @free-explorers/veshell >/dev/null
       ;;
     aur)
-      pacman -Sy --noconfirm --needed base-devel git sudo >/dev/null
+      # Full upgrade, not a bare -Sy: the rolling base images lag the mirrors,
+      # and a partial upgrade makes installing git fail on dependency conflicts.
+      pacman -Syu --noconfirm --needed base-devel git sudo >/dev/null
       if ! pacman-key --list-keys >/dev/null 2>&1; then
         pacman-key --init >/dev/null
         pacman-key --populate archlinux >/dev/null
