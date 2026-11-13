@@ -49,6 +49,7 @@ Depends:
  fonts-roboto,
  fonts-noto-core,
  fonts-noto-cjk,
+ fonts-noto-color-emoji,
  libgl1,
  libgbm1,
  libinput10,

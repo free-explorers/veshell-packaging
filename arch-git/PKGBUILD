@@ -7,7 +7,7 @@ arch=('x86_64')
 url="https://github.com/free-explorers/veshell"
 license=('GPL-3.0-or-later')
 depends=(
-  'fontconfig' 'ttf-roboto' 'noto-fonts' 'noto-fonts-cjk'
+  'fontconfig' 'ttf-roboto' 'noto-fonts' 'noto-fonts-cjk' 'noto-fonts-emoji'
   'libglvnd' 'mesa'
   'libinput' 'seatd' 'systemd-libs' 'libxkbcommon' 'libxkbcommon-x11'
   'libdisplay-info' 'wayland'

@@ -67,6 +67,7 @@ Requires:       google-noto-sans-arabic-fonts
 Requires:       google-noto-sans-bengali-fonts
 Requires:       google-noto-sans-devanagari-fonts
 Requires:       google-noto-sans-cjk-fonts
+Requires:       google-noto-color-emoji-fonts
 Requires:       mesa-libgbm
 Requires:       libglvnd
 Requires:       libinput
