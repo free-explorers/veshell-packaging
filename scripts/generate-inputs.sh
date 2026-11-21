@@ -76,6 +76,19 @@ gen_pubcache() {
   rm -rf "$VESHELL_SRC/src/shell/.dart_tool"
   ( cd "$VESHELL_SRC/src/shell"
     PUB_CACHE="$cache" "$FLUTTER_SDK_DIR/bin/flutter" pub get )
+  # The flutter tool's own packages too: the official SDK archive does not
+  # ship them (build-veshell.sh resolves them offline). They are resolved in a
+  # copy of the tool's pubspecs, so the SDK's package config is left alone.
+  local tools="$FLUTTER_SDK_DIR/packages/flutter_tools" copy
+  copy="$(mktemp -d)"
+  ( cd "$tools" && find . -name pubspec.yaml -not -path '*/test/*' -not -path '*/templates/*' \
+      -not -path '*/.dart_tool/*' | while read -r spec; do
+        mkdir -p "$copy/$(dirname "$spec")"; cp "$spec" "$copy/$spec"
+      done )
+  cp "$tools/pubspec.lock" "$copy/pubspec.lock"
+  PUB_CACHE="$cache" "$FLUTTER_SDK_DIR/bin/cache/dart-sdk/bin/dart" pub get \
+    --enforce-lockfile --directory "$copy"
+  rm -rf "$copy"
   make_tarball "$cache" "$OUT_DIR/veshell-pubcache-$RELEASE_ID.tar.zst"
   rm -rf "$cache"
   sha256sum "$OUT_DIR/veshell-pubcache-$RELEASE_ID.tar.zst"
