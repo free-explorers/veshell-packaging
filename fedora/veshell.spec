@@ -54,7 +54,7 @@ Source6:        linux-x64-debug_flutter-gtk.zip
 Source7:        linux-x64-profile_flutter-gtk.zip
 # %{artifact_base}/linux-x64-release/linux-x64-flutter-gtk.zip
 Source8:        linux-x64-release_flutter-gtk.zip
-# https://github.com/free-explorers/flutter-engine/releases/download/linux-engine-sdk-release-x86_64-%{engine_revision}/linux-engine-sdk-release-x86_64-%{engine_revision}.tar.gz
+# https://github.com/free-explorers/flutter-engine/releases/download/linux-engine-sdk-release-x86_64-deb287481e3ce9468f3434937ced4240a70539ca/linux-engine-sdk-release-x86_64-deb287481e3ce9468f3434937ced4240a70539ca.tar.gz
 Source9:        linux-engine-sdk-release-x86_64-%{engine_revision}.tar.gz
 Source10:       veshell-cargo-vendor-0.2.6.tar.zst
 Source11:       veshell-pubcache-0.2.6.tar.zst
