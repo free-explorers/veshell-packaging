@@ -79,7 +79,7 @@ source=(
 )
 sha256sums=(
   'SKIP'  # pinned git commit
-  '4e74506623dcbfde3bc3aa2a2e312aa6eb2189c2b7f0cb0a2cfe2cbbde1e7e64'  # build-veshell.sh
+  '2f0a6a046d1f2efa20b913ae7a6f12b1aacde769c717482716e34ddbf5746d70'  # build-veshell.sh
   '4ad17fc8462fbcef2ba19ff4a78c0a16b7147fde1add8578e267ea62cdb92678'  # Flutter SDK
   '6a323c81b94ef16fa6bc0d051768aa0b4e7c2f24356b58f491752623f4a063a0'  # patched_sdk
   '8af7e44890f905b8d4b4cac894f6f937ddab3b48aa40eee59c41f2fde941e6cd'  # patched_sdk_product
