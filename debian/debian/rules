@@ -10,16 +10,16 @@
 # Because Flutter is not packaged in Debian, the pinned upstream inputs are
 # supplied out of band and are NOT part of the uploaded source package. Point
 # VESHELL_INPUT_DIR at a directory holding:
-#   flutter_linux_3.47.7-stable.tar.xz
+#   flutter_linux_3.50.1-stable.tar.xz
 #   flutter_patched_sdk.zip
 #   flutter_patched_sdk_product.zip
 #   linux-x64_artifacts.zip
 #   linux-x64-debug_flutter-gtk.zip
 #   linux-x64-profile_flutter-gtk.zip
 #   linux-x64-release_flutter-gtk.zip
-#   linux-engine-sdk-release-x86_64-deb287481e3ce9468f3434937ced4240a70539ca.tar.gz
-#   veshell-cargo-vendor-0.2.6.tar.zst
-#   veshell-pubcache-0.2.6.tar.zst
+#   linux-engine-sdk-release-x86_64-4d35714800b9266b6693a58e1225ecd7e9e45ed7.tar.gz
+#   veshell-cargo-vendor-0.2.7.tar.zst
+#   veshell-pubcache-0.2.7.tar.zst
 # See README.md for why this blocks a Debian main upload.
 
 include /usr/share/dpkg/default.mk
@@ -35,7 +35,7 @@ VESHELL_INPUT_DIR ?= $(CURDIR)/debian/inputs
 FLUTTER_SDK_DIR   := $(CURDIR)/debian/.build-inputs/flutter-sdk
 CARGO_VENDOR_DIR  := $(CURDIR)/debian/.build-inputs/cargo-vendor
 PUB_CACHE_DIR     := $(CURDIR)/debian/.build-inputs/pubcache
-ENGINE_TARBALL    := $(VESHELL_INPUT_DIR)/linux-engine-sdk-release-x86_64-deb287481e3ce9468f3434937ced4240a70539ca.tar.gz
+ENGINE_TARBALL    := $(VESHELL_INPUT_DIR)/linux-engine-sdk-release-x86_64-4d35714800b9266b6693a58e1225ecd7e9e45ed7.tar.gz
 
 export VESHELL_SRC := $(CURDIR)
 export PREFIX := /usr
@@ -46,10 +46,10 @@ export PREFIX := /usr
 override_dh_auto_configure:
 	rm -rf debian/.build-inputs
 	mkdir -p $(FLUTTER_SDK_DIR) $(CARGO_VENDOR_DIR) $(PUB_CACHE_DIR)
-	tar -xJf $(VESHELL_INPUT_DIR)/flutter_linux_3.47.7-stable.tar.xz \
+	tar -xJf $(VESHELL_INPUT_DIR)/flutter_linux_3.50.1-stable.tar.xz \
 		-C $(FLUTTER_SDK_DIR) --strip-components=1
-	tar -xf $(VESHELL_INPUT_DIR)/veshell-cargo-vendor-0.2.6.tar.zst -C $(CARGO_VENDOR_DIR)
-	tar -xf $(VESHELL_INPUT_DIR)/veshell-pubcache-0.2.6.tar.zst -C $(PUB_CACHE_DIR)
+	tar -xf $(VESHELL_INPUT_DIR)/veshell-cargo-vendor-0.2.7.tar.zst -C $(CARGO_VENDOR_DIR)
+	tar -xf $(VESHELL_INPUT_DIR)/veshell-pubcache-0.2.7.tar.zst -C $(PUB_CACHE_DIR)
 
 override_dh_auto_build:
 	FLUTTER_SDK_DIR=$(FLUTTER_SDK_DIR) \
@@ -58,7 +58,7 @@ override_dh_auto_build:
 	CARGO_VENDOR_DIR=$(CARGO_VENDOR_DIR) \
 	PUB_CACHE_DIR=$(PUB_CACHE_DIR) \
 	POLKIT_HELPER_PATH=/usr/lib/polkit-1/polkit-agent-helper-1 \
-	VESHELL_BUILD_COMMIT=5ca07843a97e1a2ff851459d76509e610a6142fe \
+	VESHELL_BUILD_COMMIT=d87111d097f71ad2a98523dc72dc571d6e56beff \
 	VESHELL_BUILD_CHANNEL=beta \
 	PREFIX=/usr JOBS=$$(nproc) \
 	bash debian/build-veshell.sh build

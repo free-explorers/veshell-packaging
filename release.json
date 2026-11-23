@@ -1,69 +1,69 @@
 {
   "schema": 1,
   "name": "veshell",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "prerelease": null,
   "channel": "beta",
-  "date": "2026-11-20T13:11:57Z",
-  "commit": "5ca07843a97e1a2ff851459d76509e610a6142fe",
+  "date": "2026-11-23T14:59:07Z",
+  "commit": "d87111d097f71ad2a98523dc72dc571d6e56beff",
   "maintainer": "Adrien Peslerbe <adrien@pesler.be>",
   "polkit_helper": "/usr/lib/polkit-1/polkit-agent-helper-1",
   "mirrors": {
     "source": "https://github.com/free-explorers/veshell/archive",
-    "inputs": "https://github.com/free-explorers/veshell-packaging/releases/download/packaging-inputs-v0.2.6"
+    "inputs": "https://github.com/free-explorers/veshell-packaging/releases/download/packaging-inputs-v0.2.7"
   },
   "flutter": {
-    "version": "3.47.7",
+    "version": "3.50.1",
     "channel": "stable",
-    "engine_revision": "deb287481e3ce9468f3434937ced4240a70539ca",
+    "engine_revision": "4d35714800b9266b6693a58e1225ecd7e9e45ed7",
     "sdk": {
-      "url": "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.7-stable.tar.xz",
-      "sha256": "af7455f540df951184c7953fbe3cf884766e7541dacf8571f9f582db03dd6230"
+      "url": "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.50.1-stable.tar.xz",
+      "sha256": "4ad17fc8462fbcef2ba19ff4a78c0a16b7147fde1add8578e267ea62cdb92678"
     },
     "artifacts": {
       "patched_sdk": {
-        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/deb287481e3ce9468f3434937ced4240a70539ca/flutter_patched_sdk.zip",
-        "sha256": "e80fa5e63f51751507627456294bef28419c4facd09c33f7f49a7b4d986846f3"
+        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/4d35714800b9266b6693a58e1225ecd7e9e45ed7/flutter_patched_sdk.zip",
+        "sha256": "6a323c81b94ef16fa6bc0d051768aa0b4e7c2f24356b58f491752623f4a063a0"
       },
       "patched_sdk_product": {
-        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/deb287481e3ce9468f3434937ced4240a70539ca/flutter_patched_sdk_product.zip",
-        "sha256": "8b2ad98bd8c2f86e647da5c3863de0ffb34dc00887a005c8074971ebd76e4454"
+        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/4d35714800b9266b6693a58e1225ecd7e9e45ed7/flutter_patched_sdk_product.zip",
+        "sha256": "8af7e44890f905b8d4b4cac894f6f937ddab3b48aa40eee59c41f2fde941e6cd"
       },
       "linux_x64_artifacts": {
-        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/deb287481e3ce9468f3434937ced4240a70539ca/linux-x64/artifacts.zip",
-        "sha256": "1a716b779bc669def11c0ebac97d5400efa201824419fe67397802ffe5cdb756"
+        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/4d35714800b9266b6693a58e1225ecd7e9e45ed7/linux-x64/artifacts.zip",
+        "sha256": "572f5ac049fb8adb21a442329eeaa866328971792f28c20302fa8a99bea583d8"
       },
       "linux_x64_debug_gtk": {
-        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/deb287481e3ce9468f3434937ced4240a70539ca/linux-x64-debug/linux-x64-flutter-gtk.zip",
-        "sha256": "e1ed3d3ccc0d42d1dc58fa141dc83c4be511e5a2a1cbe0319c2aa8ae6afeadc4"
+        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/4d35714800b9266b6693a58e1225ecd7e9e45ed7/linux-x64-debug/linux-x64-flutter-gtk.zip",
+        "sha256": "b1d5701aac2944005b96872e768201d5ceb7e3f90d99acd34e827f5db8fd62de"
       },
       "linux_x64_profile_gtk": {
-        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/deb287481e3ce9468f3434937ced4240a70539ca/linux-x64-profile/linux-x64-flutter-gtk.zip",
-        "sha256": "853bee7a69edf5931f02121086118bd8dbfe01d081192c6d6cae232b1abede47"
+        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/4d35714800b9266b6693a58e1225ecd7e9e45ed7/linux-x64-profile/linux-x64-flutter-gtk.zip",
+        "sha256": "9949f8e366c7c8cf4d9a50fade6607f3f32c8de7b03e79cca0b33968a09de3c5"
       },
       "linux_x64_release_gtk": {
-        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/deb287481e3ce9468f3434937ced4240a70539ca/linux-x64-release/linux-x64-flutter-gtk.zip",
-        "sha256": "a6da7b0d57c82519d7b901462344676fe089068caca336466dcf3e1c270e9aa8"
+        "url": "https://storage.googleapis.com/flutter_infra_release/flutter/4d35714800b9266b6693a58e1225ecd7e9e45ed7/linux-x64-release/linux-x64-flutter-gtk.zip",
+        "sha256": "aac268d6421af245e9ce03f371e846ad2e6b6aa8a91333a2f9a78a8c119ac54d"
       }
     },
     "engine": {
-      "url": "https://github.com/free-explorers/flutter-engine/releases/download/linux-engine-sdk-release-x86_64-deb287481e3ce9468f3434937ced4240a70539ca/linux-engine-sdk-release-x86_64-deb287481e3ce9468f3434937ced4240a70539ca.tar.gz",
-      "sha256": "7f111525f32a590d1f00526758f1fecb520424b98aecc6afac82d5014a1684c7"
+      "url": "https://github.com/free-explorers/flutter-engine/releases/download/linux-engine-sdk-release-x86_64-4d35714800b9266b6693a58e1225ecd7e9e45ed7-veshell.2/linux-engine-sdk-release-x86_64-4d35714800b9266b6693a58e1225ecd7e9e45ed7-veshell.2.tar.gz",
+      "sha256": "d1860d06a4cdbab158dbe3fc5bb6b0aef4eb84729bb966e1ed75b3f2d3b24984"
     }
   },
   "nix": {
     "engine_source": {
       "repository": "free-explorers/flutter-engine-nix",
-      "revision": "fc658766e461d659493618eff60bacb72d4ec212",
-      "sha256": "0bvb7hvlgr5gim1svyfhgdh7yqkhgsdlfhyq4i3nml50gwj066cm"
+      "revision": "647512169db4331e9bc82f130a5b15a4442cf857",
+      "sha256": "0ivbwmm31lja0bimr1kv88ixsn5zqr0k0hh5yl44ikcl39c94a47"
     }
   },
   "inputs": {
     "cargo_vendor": {
-      "sha256": "1c1863bdf68ca0f3cb6640b8f512f000ad3e1af034feef3a7603b34e654ad703"
+      "sha256": "071b2acc0d31b1cb9ce0e1a29fd57b847fdd615ab928c6cf314ceb54442c00ec"
     },
     "pubcache": {
-      "sha256": "266c7a5cee63d1070c3cd94d5d02c6fb3a8bf53dced3be0c32c8dac5a034bfdb"
+      "sha256": "2a9417aa013b3e8185afda3598a8e22d9530bc6da7a1e16ffa046c2ace891b1f"
     }
   }
 }
