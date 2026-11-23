@@ -110,21 +110,39 @@ configure_cargo_vendor() {
   log "Configuring Cargo to build from vendored sources"
   mkdir -p "$VESHELL_SRC/.cargo"
   local cfg="$VESHELL_SRC/.cargo/config.toml"
+  local lock="$VESHELL_SRC/Cargo.lock"
   if ! grep -q 'vendored-sources' "$cfg" 2>/dev/null; then
-    cat >> "$cfg" <<EOF
+    # `cargo vendor` vendors the git dependencies with the crates, but Cargo
+    # only takes a git source from the vendor directory when it is replaced by
+    # name, revision included. Read them from Cargo.lock rather than pinning
+    # one here: a dependency bump would otherwise send the offline build to
+    # the network.
+    if grep '^source = "git+' "$lock" | grep -qv '^source = "git+[^?#"]*?rev=[^#"]*#'; then
+      die "Cargo.lock has a git dependency not pinned by rev; only rev pins can be vendored"
+    fi
+    {
+      cat <<EOF
 
 # Added by scripts/build-veshell.sh: build strictly offline.
 [source.crates-io]
 replace-with = "vendored-sources"
+EOF
+      sed -n 's/^source = "git+\([^?#"]*\)?rev=\([^#"]*\)#.*"$/\1 \2/p' "$lock" | sort -u |
+        while read -r url rev; do
+          cat <<EOF
 
-[source."git+https://github.com/Smithay/smithay.git?rev=4cf0b62028039661477d482ec4758b687d8f4392"]
-git = "https://github.com/Smithay/smithay.git"
-rev = "4cf0b62028039661477d482ec4758b687d8f4392"
+[source."git+$url?rev=$rev"]
+git = "$url"
+rev = "$rev"
 replace-with = "vendored-sources"
+EOF
+        done
+      cat <<EOF
 
 [source.vendored-sources]
 directory = "$CARGO_VENDOR_DIR"
 EOF
+    } >> "$cfg"
   fi
 }
 
