@@ -95,7 +95,7 @@ stage_engine() {
   rm -rf "$ENGINE_ROOT"
   local tmp sdk
   tmp="$(mktemp -d)"
-  tar -xzf "$ENGINE_TARBALL" -C "$tmp"
+  tar --no-same-owner -xzf "$ENGINE_TARBALL" -C "$tmp"
   sdk="$(find "$tmp" -type d -path '*/out/*/engine-sdk' | head -n1)"
   [ -n "$sdk" ] || die "engine-sdk directory not found in $ENGINE_TARBALL"
   [ -f "$sdk/include/flutter_embedder.h" ] || die "flutter_embedder.h missing from engine"
@@ -134,11 +134,20 @@ build_shell() {
   export PUB_ENVIRONMENT="veshell-packaging"
   export FLUTTER_SUPPRESS_ANALYTICS=true
   # pub get must not consult pub.dev; the cache is complete by construction.
+  # The flutter tool first checks its own packages. The official archive ships
+  # their package config with paths from Flutter's build machine, so it would
+  # resolve them again, online: a sandbox without network retries forever.
+  # Resolve them from the pub cache first (it holds them, see
+  # generate-inputs.sh).
+  "$FLUTTER_SDK_DIR/bin/cache/dart-sdk/bin/dart" pub get --offline --enforce-lockfile \
+    --directory "$FLUTTER_SDK_DIR/packages/flutter_tools"
   ( cd "$VESHELL_SRC/src/shell"
     "$FLUTTER_SDK_DIR/bin/flutter" --no-version-check config --no-analytics >/dev/null 2>&1 || true
     "$FLUTTER_SDK_DIR/bin/flutter" --no-version-check pub get --offline
     "$FLUTTER_SDK_DIR/bin/dart" run build_runner build
-    "$FLUTTER_SDK_DIR/bin/flutter" --no-version-check build linux --release \
+    # --no-pub: the packages are resolved offline above; the build's own pub
+    # get runs online and, in a sandbox without network, retries forever.
+    "$FLUTTER_SDK_DIR/bin/flutter" --no-version-check build linux --release --no-pub \
       --dart-define="VESHELL_POLKIT_HELPER_PATH=$POLKIT_HELPER_PATH"
   )
   [ -f "$SHELL_BUNDLE/lib/libapp.so" ] || die "shell AOT library missing: $SHELL_BUNDLE/lib/libapp.so"
