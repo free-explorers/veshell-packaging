@@ -34,6 +34,8 @@ import os
 import re
 import subprocess
 import sys
+
+import nix_engine_source
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -104,12 +106,7 @@ def sync_pins(manifest: dict, veshell_src: Path) -> None:
         "engine": entry["engine"],
     }
 
-    engine_source = json.loads((veshell_src / "nix" / "engine-repository.json").read_text())
-    manifest["nix"]["engine_source"] = {
-        "repository": engine_source["repository"],
-        "revision": engine_source["revision"],
-        "sha256": engine_source["sha256"],
-    }
+    manifest["nix"]["engine_source"] = nix_engine_source.read(veshell_src)
 
 
 def sync_inputs(manifest: dict, args: argparse.Namespace) -> None:

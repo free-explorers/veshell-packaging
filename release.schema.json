@@ -70,7 +70,7 @@
       "properties": {
         "engine_source": {
           "type": "object",
-          "description": "Nix-specific source-build pin for the Flutter engine; mirrors nix/engine-repository.json.",
+          "description": "Nix-specific source-build pin for the Flutter engine; mirrors the flutter-engine-nix input of Veshell's flake.lock (nix/engine-repository.json in older sources). sha256 is the unpacked source's hash: an SRI narHash, or a fetchTarball base32 hash from an older source.",
           "additionalProperties": false,
           "required": ["repository", "revision", "sha256"],
           "properties": {
