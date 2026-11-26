@@ -118,8 +118,9 @@ scripts/render-recipes.py --check  # verify they are in sync (CI)
 The renderer applies the per-distro version mapping (Arch `0.2.0beta1`,
 RPM `0.2.0` with `Release: 0.1.beta1`, Debian `0.2.0~beta.1-1`) and refuses to
 run when a recipe's copy of `build-veshell.sh` drifts from the canonical helper.
-`--check` also fails if `Cargo.toml`, `nix/flutter-sdk.json` or
-`nix/engine-repository.json` disagree with the manifest, so one release identity
+`--check` also fails if `Cargo.toml`, `nix/flutter-sdk.json` or the
+`flutter-engine-nix` input of `flake.lock` (`nix/engine-repository.json` in older
+Veshell sources) disagree with the manifest, so one release identity
 covers the distro recipes and the Nix packaging. Editing a rendered recipe by
 hand is a mistake: change `release.json` or the templates and re-render.
 

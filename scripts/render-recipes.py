@@ -28,6 +28,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import nix_engine_source
+
 try:
     import tomllib as _toml
 except ModuleNotFoundError:  # pragma: no cover - Python < 3.11
@@ -189,14 +191,14 @@ def validate_repo_pins(manifest: dict, veshell_src: Path | None) -> None:
     if nix_engine_version != manifest_engine:
         fail(f"nix/flutter-sdk.json engineVersion ({nix_engine_version}) != manifest flutter.engine_revision ({manifest_engine})")
 
-    nix_engine_repo = veshell_src / "nix" / "engine-repository.json"
-    if not nix_engine_repo.is_file():
-        fail(f"missing nix/engine-repository.json in Veshell source: {veshell_src}")
-    nix_engine = json.loads(nix_engine_repo.read_text())
+    try:
+        nix_engine = nix_engine_source.read(veshell_src)
+    except FileNotFoundError as error:
+        fail(str(error))
     source = manifest["nix"]["engine_source"]
     for key in ("repository", "revision", "sha256"):
-        if nix_engine.get(key) != source[key]:
-            fail(f"nix/engine-repository.json {key} ({nix_engine.get(key)}) != manifest nix.engine_source.{key} ({source[key]})")
+        if nix_engine[key] != source[key]:
+            fail(f"Veshell's flutter-engine-nix pin: {key} ({nix_engine[key]}) != manifest nix.engine_source.{key} ({source[key]})")
 
 
 def helper_sha256() -> str:
