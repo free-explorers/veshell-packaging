@@ -1,16 +1,16 @@
 {
   "schema": 1,
   "name": "veshell",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "prerelease": null,
   "channel": "beta",
-  "date": "2026-11-23T14:59:07Z",
-  "commit": "d87111d097f71ad2a98523dc72dc571d6e56beff",
+  "date": "2026-11-26T21:39:00Z",
+  "commit": "eacf7a4b5812559fe9614ee25f57aee738d82d11",
   "maintainer": "Adrien Peslerbe <adrien@pesler.be>",
   "polkit_helper": "/usr/lib/polkit-1/polkit-agent-helper-1",
   "mirrors": {
     "source": "https://github.com/free-explorers/veshell/archive",
-    "inputs": "https://github.com/free-explorers/veshell-packaging/releases/download/packaging-inputs-v0.2.7"
+    "inputs": "https://github.com/free-explorers/veshell-packaging/releases/download/packaging-inputs-v0.2.8"
   },
   "flutter": {
     "version": "3.50.1",
@@ -54,8 +54,8 @@
   "nix": {
     "engine_source": {
       "repository": "free-explorers/flutter-engine-nix",
-      "revision": "647512169db4331e9bc82f130a5b15a4442cf857",
-      "sha256": "0ivbwmm31lja0bimr1kv88ixsn5zqr0k0hh5yl44ikcl39c94a47"
+      "revision": "9678e40f009dc564516eebe61831e2c9c5f6b4b5",
+      "sha256": "sha256-4wcgMGIUCqXmswvGGUZbbBjmmWa22tMSuanV6jEPiYg="
     }
   },
   "inputs": {
@@ -63,7 +63,7 @@
       "sha256": "071b2acc0d31b1cb9ce0e1a29fd57b847fdd615ab928c6cf314ceb54442c00ec"
     },
     "pubcache": {
-      "sha256": "2a9417aa013b3e8185afda3598a8e22d9530bc6da7a1e16ffa046c2ace891b1f"
+      "sha256": "59dcb246d0b981b8821638596e256398373825d928b3311ca60489217e1d1401"
     }
   }
 }

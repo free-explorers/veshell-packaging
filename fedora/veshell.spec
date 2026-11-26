@@ -17,12 +17,12 @@
 # that blocker is documented in README.md. This spec is intended for
 # a COPR / self-hosted repository.
 
-%global commit d87111d097f71ad2a98523dc72dc571d6e56beff
-%global shortcommit d87111d
+%global commit eacf7a4b5812559fe9614ee25f57aee738d82d11
+%global shortcommit eacf7a4
 %global flutter_version 3.50.1
 %global engine_revision 4d35714800b9266b6693a58e1225ecd7e9e45ed7
 %global artifact_base https://storage.googleapis.com/flutter_infra_release/flutter/%{engine_revision}
-%global input_mirror https://github.com/free-explorers/veshell-packaging/releases/download/packaging-inputs-v0.2.7
+%global input_mirror https://github.com/free-explorers/veshell-packaging/releases/download/packaging-inputs-v0.2.8
 
 %global debug_package %{nil}
 
@@ -33,7 +33,7 @@
 %global _lto_cflags %{nil}
 
 Name:           veshell
-Version:        0.2.7
+Version:        0.2.8
 Release:        1%{?dist}
 Summary:        An innovative Not-Desktop environment for Linux built with Flutter and Rust
 License:        GPL-3.0-or-later
@@ -56,8 +56,8 @@ Source7:        linux-x64-profile_flutter-gtk.zip
 Source8:        linux-x64-release_flutter-gtk.zip
 # https://github.com/free-explorers/flutter-engine/releases/download/linux-engine-sdk-release-x86_64-4d35714800b9266b6693a58e1225ecd7e9e45ed7-veshell.2/linux-engine-sdk-release-x86_64-4d35714800b9266b6693a58e1225ecd7e9e45ed7-veshell.2.tar.gz
 Source9:        linux-engine-sdk-release-x86_64-%{engine_revision}.tar.gz
-Source10:       veshell-cargo-vendor-0.2.7.tar.zst
-Source11:       veshell-pubcache-0.2.7.tar.zst
+Source10:       veshell-cargo-vendor-0.2.8.tar.zst
+Source11:       veshell-pubcache-0.2.8.tar.zst
 
 # Runtime dependencies (fonts, DRM/GL, session bus, audio, capture, portals).
 Requires:       fontconfig
@@ -170,5 +170,5 @@ bash %{SOURCE1} install
 %config(noreplace) %{_sysconfdir}/pam.d/veshell-fingerprint
 
 %changelog
-* Mon Nov 23 2026 Adrien Peslerbe <adrien@pesler.be> - 0.2.7-1
-- Veshell 0.2.7 (beta).
+* Thu Nov 26 2026 Adrien Peslerbe <adrien@pesler.be> - 0.2.8-1
+- Veshell 0.2.8 (beta).
